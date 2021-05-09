@@ -1,4 +1,5 @@
 #include <vector>
+#include <map>
 #include <string>
 #include <fstream>
 #include "definitions.h"
@@ -11,5 +12,7 @@ class Parser
 
   private:
     Instruction getInstruction(std::string line);
+    std::vector<std::string> splitLine(std::string &line);
     std::fstream file_;
+    std::map<std::string, int> lut_;
 };
