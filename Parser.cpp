@@ -4,6 +4,7 @@
 
 Parser::Parser()
 {
+  //use this look-up table to translate string representation of registers into its index
   lut_ = {
     {"zero", 0}, {"ra", 1}, {"sp", 2}, {"gp", 3}, {"tp", 4}, {"t0", 5},
     {"t1", 6}, {"t2", 7}, {"fp", 8}, {"s1", 9}, {"a0", 10}, {"a1", 11},
@@ -14,6 +15,9 @@ Parser::Parser()
   };
 }
 
+/*
+ * goes through the given file and separates each statement into instructions
+ */
 void Parser::parse(std::vector<Instruction> &instructions, std::string filename)
 {
   file_ = std::fstream(filename, std::ios::in);
@@ -21,112 +25,132 @@ void Parser::parse(std::vector<Instruction> &instructions, std::string filename)
   std::string line;
   while(std::getline(file_, line))
   {
-    std::cout << line << std::endl;
-    Instruction instruction = getInstruction(line);
-    printf("%s, %d, %d, %d, %d\n", instruction.name_.c_str(), instruction.Rd_, instruction.Rs1_,
-      instruction.Rs2_, instruction.imm_);
+    if(!line.empty())
+    {
+      Instruction instruction = getInstruction(line);
+      printf("%s, %d, %d, %d, %d\n", instruction.name_.c_str(), instruction.Rd_, instruction.Rs1_,
+        instruction.Rs2_, instruction.imm_);
+    }
   }
 
-
+  for(auto &label : label_lut_)
+  {
+    if(!label.second.verified_)
+    {
+      printf("label %s not verified\n", label.first.c_str());
+      exit(-1);
+    }
+  }
 }
 
+/*
+ * parses each line into instructions and checks for errors
+ */
 Instruction Parser::getInstruction(std::string line)
 {
   Instruction instruction;
   std::vector<std::string> split_line = splitLine(line);
 
+  if(split_line.empty())
+  {
+    printf("Invalid line (empty)\n");
+    exit(-1);
+  }
+
   instruction.name_ = split_line.at(0);
 
-  if(instruction.name_ == "ADD" || instruction.name_ == "SUB")
+  //interpret single statements as labels with an ':' at the end as a label
+  //only save label without ':' though
+  if(split_line.size() == 1 && instruction.name_.back() == ':')
   {
-    auto Rd = lut_.find(split_line.at(1));
-    auto Rs1 = lut_.find(split_line.at(2));
-    auto Rs2 = lut_.find(split_line.at(3));
-
-    if(Rd == lut_.end() || Rs1 == lut_.end() || Rs2 == lut_.end())
+    std::string label_name = split_line.at(0).substr(0, split_line.at(0).size() - 1);
+    auto label = label_lut_.find(label_name);
+    if(label == label_lut_.end())
     {
-      printf("Error in ADD or SUB with register parsing\n");
-      exit(-1);
+      printf("insert and verify label %s\n", label_name.c_str());
+      label_lut_.insert({label_name, {label_count_++, true}});
+    }
+    else
+    {
+      printf("verify label %s\n", label_name.c_str());
+      label->second.verified_ = true;
     }
 
-    instruction.Rd_ = Rd->second;
-    instruction.Rs1_ = Rs1->second;
-    instruction.Rs2_ = Rs2->second;
-    instruction.imm_ = -1;
-  }
-  else if(instruction.name_ == "ADDI" || instruction.name_ == "LW" ||
-    instruction.name_ == "JALR")
-  {
-    auto Rd = lut_.find(split_line.at(1));
-    auto Rs1 = lut_.find(split_line.at(2));
-    int imm = 0;
-    try
-    {
-      imm = std::stoi(split_line.at(3));
-    }
-    catch(std::exception &e)
-    {
-      printf("Exception in ADDI/JW/JALR: %s\n", e.what());
-      exit(-1);
-    }
-
-    if(Rd == lut_.end() || Rs1 == lut_.end())
-    {
-      printf("Error in ADDI or LW with register parsing\n");
-      exit(-1);
-    }
-
-    instruction.Rd_ = Rd->second;
-    instruction.Rs1_ = Rs1->second;
+    instruction.Rd_ = -1;
+    instruction.Rs1_ = -1;
     instruction.Rs2_ = -1;
-    instruction.imm_ = imm;
+    instruction.imm_ = -1;
+
+    return instruction;
   }
-  else if(instruction.name_ == "SW" || instruction.name_ == "BEQ" ||
-    instruction.name_ == "BNE" || instruction.name_ == "BLT" ||
-    instruction.name_ == "BGE")
+
+  //from here parse every supported instruction
+  if(instruction.name_ == "EBREAK")
   {
-    auto Rs1 = lut_.find(split_line.at(1));
-    auto Rs2 = lut_.find(split_line.at(2));
-    int imm = 0;
-    try
+    if(split_line.size() != 1)
     {
-      imm = std::stoi(split_line.at(3));
-    }
-    catch(std::exception &e)
-    {
-      printf("Exception in SW/BEQ/BNE/BLT/BGE: %s\n", e.what());
+      printf("Invalid line\n");
       exit(-1);
     }
 
     instruction.Rd_ = -1;
-    instruction.Rs1_ = Rs1->second;
-    instruction.Rs2_ = Rs2->second;
-    instruction.imm_ = imm;
+    instruction.Rs1_ = -1;
+    instruction.Rs2_ = -1;
+    instruction.imm_ = -1;
   }
   else if(instruction.name_ == "JAL")
   {
-    auto Rd = lut_.find(split_line.at(1));
-    int imm = 0;
-
-    try
+    if(split_line.size() != 3)
     {
-      imm = std::stoi(split_line.at(2));
-    }
-    catch(std::exception &e)
-    {
-      printf("Exception in JAL: %s\n", e.what());
+      printf("Invalid line\n");
       exit(-1);
     }
 
-    instruction.Rd_ = Rd->second;
-    instruction.Rs1_ = -1;
-    instruction.Rs2_ = -1;
-    instruction.imm_ = imm;
+    parseJAL(instruction, split_line);
+  }
+  else
+  {
+    if(split_line.size() != 4)
+    {
+      printf("Invalid line\n");
+      exit(-1);
+    }
+
+    if(instruction.name_ == "ADD" || instruction.name_ == "SUB")
+    {
+      parseADD(instruction, split_line);
+    }
+    else if(instruction.name_ == "LW" || instruction.name_ == "JALR")
+    {
+      parseLW(instruction, split_line);
+    }
+    else if(instruction.name_ == "SW")
+    {
+      parseSW(instruction, split_line);
+    }
+    else if(instruction.name_ == "ADDI")
+    {
+      parseADDI(instruction, split_line);
+    }
+    else if(instruction.name_ == "BEQ" || instruction.name_ == "BNE" ||
+      instruction.name_ == "BLT" || instruction.name_ == "BGE")
+    {
+      parseBEQ(instruction, split_line);
+    }
+    else
+    {
+      printf("Instruction %s not known\n", instruction.name_.c_str());
+      exit(-1);
+    }
   }
 
   return instruction;
 }
 
+/*
+ * splits the line with delimiters (' ', ',', '(' and ')')
+ */
+//TODO: interpret '#' as comments
 std::vector<std::string> Parser::splitLine(std::string &line)
 {
   std::vector<std::string> attributes;
@@ -135,7 +159,7 @@ std::vector<std::string> Parser::splitLine(std::string &line)
 
   for(auto &s : line)
   {
-    if(s == ' ' || s == ',')
+    if(s == ' ' || s == ',' || s == '(' || s == ')')
     {
       if(!split.empty())
       {
@@ -150,4 +174,154 @@ std::vector<std::string> Parser::splitLine(std::string &line)
   }
 
   return attributes;
+}
+
+void Parser::parseJAL(Instruction &instruction, std::vector<std::string> &split_line)
+{
+  auto Rd = lut_.find(split_line.at(1));
+  auto imm = label_lut_.find(split_line.at(2));
+
+  if(Rd == lut_.end())
+  {
+    printf("Error with register parsing in JAL\n");
+    exit(-1);
+  }
+
+  if(imm == label_lut_.end())
+  {
+    printf("insert label %s\n", split_line.at(2).c_str());
+    label_lut_.insert({split_line.at(2), {label_count_++, false}});
+    imm = label_lut_.find(split_line.at(2));
+  }
+
+  instruction.Rd_ = Rd->second;
+  instruction.Rs1_ = -1;
+  instruction.Rs2_ = -1;
+  instruction.imm_ = imm->second.count_;
+}
+
+void Parser::parseADD(Instruction &instruction, std::vector<std::string> &split_line)
+{
+  auto Rd = lut_.find(split_line.at(1));
+  auto Rs1 = lut_.find(split_line.at(2));
+  auto Rs2 = lut_.find(split_line.at(3));
+
+  if(Rd == lut_.end() || Rs1 == lut_.end() || Rs2 == lut_.end())
+  {
+    printf("Error with register parsing in ADD/SUB\n");
+    exit(-1);
+  }
+
+  instruction.Rd_ = Rd->second;
+  instruction.Rs1_ = Rs1->second;
+  instruction.Rs2_ = Rs2->second;
+  instruction.imm_ = -1;
+}
+
+void Parser::parseLW(Instruction &instruction, std::vector<std::string> &split_line)
+{
+  auto Rd = lut_.find(split_line.at(1));
+  auto Rs1 = lut_.find(split_line.at(3));
+  int imm = 0;
+
+  try
+  {
+    imm = std::stoi(split_line.at(2));
+  }
+  catch(std::exception &e)
+  {
+    printf("Error with register parsing in LW/JALR: %s\n", e.what());
+    exit(-1);
+  }
+
+  if(Rd == lut_.end() || Rs1 == lut_.end())
+  {
+    printf("Error with register parsing in LW/JALR\n");
+    exit(-1);
+  }
+
+  instruction.Rd_ = Rd->second;
+  instruction.Rs1_ = Rs1->second;
+  instruction.Rs2_ = -1;
+  instruction.imm_ = imm;
+}
+
+void Parser::parseSW(Instruction &instruction, std::vector<std::string> &split_line)
+{
+  auto Rs1 = lut_.find(split_line.at(1));
+  auto Rs2 = lut_.find(split_line.at(3));
+  int imm = 0;
+
+  try
+  {
+    imm = std::stoi(split_line.at(2));
+  }
+  catch(std::exception &e)
+  {
+    printf("Error with register parsing in SW: %s\n", e.what());
+    exit(-1);
+  }
+
+  if(Rs1 == lut_.end() || Rs2 == lut_.end())
+  {
+    printf("Error with register parsing in SW\n");
+    exit(-1);
+  }
+
+  instruction.Rd_ = -1;
+  instruction.Rs1_ = Rs1->second;
+  instruction.Rs2_ = Rs2->second;
+  instruction.imm_ = imm;
+}
+
+void Parser::parseADDI(Instruction &instruction, std::vector<std::string> &split_line)
+{
+  auto Rd = lut_.find(split_line.at(1));
+  auto Rs1 = lut_.find(split_line.at(2));
+  int imm = 0;
+
+  try
+  {
+    imm = std::stoi(split_line.at(3));
+  }
+  catch(std::exception &e)
+  {
+    printf("Error with register parsing in ADDI: %s\n", e.what());
+  }
+
+  if(Rd == lut_.end() || Rs1 == lut_.end())
+  {
+    printf("Error with register parsing in ADDI\n");
+    exit(-1);
+  }
+
+  instruction.Rd_ = Rd->second;
+  instruction.Rs1_ = Rs1->second;
+  instruction.Rs2_ = -1;
+  instruction.imm_ = imm;
+}
+
+void Parser::parseBEQ(Instruction &instruction, std::vector<std::string> &split_line)
+{
+  auto Rs1 = lut_.find(split_line.at(1));
+  auto Rs2 = lut_.find(split_line.at(2));
+  auto imm = label_lut_.find(split_line.at(3));
+
+  if(Rs1 == lut_.end() || Rs2 == lut_.end())
+  {
+    printf("Error with register parsing in BEQ/BNE/BLT/BGE\n");
+    exit(-1);
+  }
+
+  if(imm == label_lut_.end())
+  {
+    printf("insert label %s\n", split_line.at(3).c_str());
+    label_lut_.insert({split_line.at(3), {label_count_++, false}});
+    imm = label_lut_.find(split_line.at(3));
+  }
+
+  instruction.Rd_ = -1;
+  instruction.Rs1_ = Rs1->second;
+  instruction.Rs2_ = Rs2->second;
+  instruction.imm_ = imm->second.count_;
 }

@@ -11,3 +11,9 @@ struct Instruction
   int Rs2_;
   int imm_;
 };
+
+struct Label
+{
+  int count_;
+  bool verified_;
+};
