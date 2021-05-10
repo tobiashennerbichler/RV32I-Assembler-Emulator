@@ -224,14 +224,29 @@ void Parser::parseLW(Instruction &instruction, std::vector<std::string> &split_l
   auto Rs1 = lut_.find(split_line.at(3));
   int imm = 0;
 
-  try
+  if(isHex(split_line.at(2)))
   {
-    imm = std::stoi(split_line.at(2));
+    try
+    {
+      imm = std::stoi(split_line.at(2), 0, 16);
+    }
+    catch(std::exception &e)
+    {
+      printf("Error with register parsing in LW/JALR: %s\n", e.what());
+      exit(-1);
+    }
   }
-  catch(std::exception &e)
+  else
   {
-    printf("Error with register parsing in LW/JALR: %s\n", e.what());
-    exit(-1);
+    try
+    {
+      imm = std::stoi(split_line.at(2));
+    }
+    catch(std::exception &e)
+    {
+      printf("Error with register parsing in LW/JALR: %s\n", e.what());
+      exit(-1);
+    }
   }
 
   if(Rd == lut_.end() || Rs1 == lut_.end())
@@ -252,14 +267,29 @@ void Parser::parseSW(Instruction &instruction, std::vector<std::string> &split_l
   auto Rs2 = lut_.find(split_line.at(3));
   int imm = 0;
 
-  try
+  if(isHex(split_line.at(2)))
   {
-    imm = std::stoi(split_line.at(2));
+    try
+    {
+      imm = std::stoi(split_line.at(2), 0, 16);
+    }
+    catch(std::exception &e)
+    {
+      printf("Error with register parsing in SW: %s\n", e.what());
+      exit(-1);
+    }
   }
-  catch(std::exception &e)
+  else
   {
-    printf("Error with register parsing in SW: %s\n", e.what());
-    exit(-1);
+    try
+    {
+      imm = std::stoi(split_line.at(2));
+    }
+    catch(std::exception &e)
+    {
+      printf("Error with register parsing in SW: %s\n", e.what());
+      exit(-1);
+    }
   }
 
   if(Rs1 == lut_.end() || Rs2 == lut_.end())
@@ -280,13 +310,27 @@ void Parser::parseADDI(Instruction &instruction, std::vector<std::string> &split
   auto Rs1 = lut_.find(split_line.at(2));
   int imm = 0;
 
-  try
+  if(isHex(split_line.at(3)))
   {
-    imm = std::stoi(split_line.at(3));
+    try
+    {
+      imm = std::stoi(split_line.at(3), 0, 16);
+    }
+    catch(std::exception &e)
+    {
+      printf("Error with register parsing in ADDI: %s\n", e.what());
+    }
   }
-  catch(std::exception &e)
+  else
   {
-    printf("Error with register parsing in ADDI: %s\n", e.what());
+    try
+    {
+      imm = std::stoi(split_line.at(3));
+    }
+    catch(std::exception &e)
+    {
+      printf("Error with register parsing in ADDI: %s\n", e.what());
+    }
   }
 
   if(Rd == lut_.end() || Rs1 == lut_.end())
@@ -324,4 +368,14 @@ void Parser::parseBEQ(Instruction &instruction, std::vector<std::string> &split_
   instruction.Rs1_ = Rs1->second;
   instruction.Rs2_ = Rs2->second;
   instruction.imm_ = imm->second.count_;
+}
+
+bool Parser::isHex(std::string &line)
+{
+  if(line.find("0x") != line.npos)
+  {
+    return true;
+  }
+
+  return false;
 }
