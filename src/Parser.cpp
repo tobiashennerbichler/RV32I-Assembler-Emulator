@@ -1,6 +1,15 @@
-#include "Parser.h"
+#include "../include/Parser.h"
 #include <iostream>
 #include <fstream>
+
+Parser *Parser::instance_ = 0;
+
+Parser *Parser::instance()
+{
+  if(!instance_)
+    instance_ = new Parser();
+  return instance_;
+}
 
 Parser::Parser()
 {
@@ -15,15 +24,26 @@ Parser::Parser()
   };
 }
 
+Parser::~Parser()
+{
+  delete instance_;
+}
+
 /*
  * goes through the given file and separates each statement into instructions
  */
-void Parser::parse(std::vector<Instruction> &instructions, std::string filename)
+bool Parser::parse(std::vector<Instruction> &instructions, std::string filename)
 {
-  file_ = std::fstream(filename, std::ios::in);
+  std::fstream file = std::fstream(filename, std::ios::in);
+
+  if(!file.is_open())
+  {
+    printf("file %s could not be opened\n", filename.c_str());
+    return false;
+  }
 
   std::string line;
-  while(std::getline(file_, line))
+  while(std::getline(file, line))
   {
     if(!line.empty())
     {
@@ -41,6 +61,8 @@ void Parser::parse(std::vector<Instruction> &instructions, std::string filename)
       exit(-1);
     }
   }
+
+  return true;
 }
 
 /*

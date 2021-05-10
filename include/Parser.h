@@ -8,15 +8,17 @@ class Parser
 {
   public:
     Parser();
-    void parse(std::vector<Instruction> &instructions, std::string filename);
+    virtual ~Parser();
+    bool parse(std::vector<Instruction> &instructions, std::string filename);
+    static Parser *instance();
 
   private:
     Instruction getInstruction(std::string line);
     std::vector<std::string> splitLine(std::string &line);
-    std::fstream file_;
     std::map<std::string, int> lut_;
     std::map<std::string, Label> label_lut_;
     int label_count_ = 0;
+    static Parser *instance_;
 
     void parseJAL(Instruction &instruction, std::vector<std::string> &split_line);
     void parseADD(Instruction &instruction, std::vector<std::string> &split_line);

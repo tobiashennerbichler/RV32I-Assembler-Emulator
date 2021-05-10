@@ -1,5 +1,6 @@
 #include <iostream>
-#include "Interpreter.h"
+#include "../include/Interpreter.h"
+#include "../include/TestSystem.h"
 
 Interpreter::Interpreter() : memory_(0x1000), registers_(32)
 {
@@ -8,7 +9,7 @@ Interpreter::Interpreter() : memory_(0x1000), registers_(32)
 
 void Interpreter::run()
 {
-  parser_.parse(instructions_, "../RISC-V-Interpreter/test.txt");
+  TestSystem::testFiles();
 }
 
 void Interpreter::ADD(s32 &Rd, s32 Rs1, s32 Rs2)

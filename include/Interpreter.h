@@ -24,6 +24,5 @@ class Interpreter
     std::vector<u32> memory_;
     u32 pc_;
     std::vector<u32> registers_;
-    Parser parser_;
     std::vector<Instruction> instructions_;
 };
