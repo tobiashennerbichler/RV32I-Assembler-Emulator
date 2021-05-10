@@ -50,6 +50,7 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string filename)
       Instruction instruction = getInstruction(line);
       printf("%s, %d, %d, %d, %d\n", instruction.name_.c_str(), instruction.Rd_, instruction.Rs1_,
         instruction.Rs2_, instruction.imm_);
+      instructions.push_back(instruction);
     }
   }
 

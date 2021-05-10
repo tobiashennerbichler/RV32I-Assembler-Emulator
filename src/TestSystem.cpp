@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <iostream>
 #include "../include/TestSystem.h"
 #include "../include/Parser.h"
 
@@ -31,6 +32,14 @@ bool TestSystem::testFile(std::string &file_name, std::string &ref_file_name)
     return false;
   }
 
+  auto instruction = instructions.begin();
+
+  if(instruction == instructions.end())
+  {
+    printf("no instructions\n");
+    return false;
+  }
+
   std::ifstream ref_file = std::ifstream("../RISC-V-Interpreter/FileRef/" + ref_file_name);
 
   if(!ref_file.is_open())
@@ -39,16 +48,33 @@ bool TestSystem::testFile(std::string &file_name, std::string &ref_file_name)
     return false;
   }
 
-  auto instruction = instructions.begin();
   std::string ref_line;
 
   while(std::getline(ref_file, ref_line))
   {
-//    std::string line = instruction->name_ + " " + std::to_string(instruction->Rd_) + " " +
-//      std::to_string(instruction->Rs1_) + " " + std::to_string(instruction->Rs2_) + " " +
-//      std::to_string(instruction->imm_);
-    printf("line: %s %d %d %d %d\n", instruction->name_.c_str(), instruction->Rd_, instruction->Rs1_,
-      instruction->Rs2_, instruction->imm_);
+    if(instruction == instructions.end())
+    {
+      printf("instructions too short\n");
+      return false;
+    }
+
+    std::string line = instruction->name_ + " " + std::to_string(instruction->Rd_) + " " +
+      std::to_string(instruction->Rs1_) + " " + std::to_string(instruction->Rs2_) + " " +
+      std::to_string(instruction->imm_);
+
+    if(ref_line != line)
+    {
+      printf("%s != %s\n", ref_line.c_str(), line.c_str());
+      return false;
+    }
+
+    instruction++;
+  }
+
+  if(instruction != instructions.end())
+  {
+    printf("instructions too long\n");
+    return false;
   }
 
   return true;
