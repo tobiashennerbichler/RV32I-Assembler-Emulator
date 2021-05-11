@@ -223,6 +223,7 @@ void Parser::parseJAL(Instruction &instruction, std::vector<std::string> &split_
   instruction.imm_ = imm->second.count_;
 }
 
+//TODO: maybe make a function for every instruction and there already pass the function pointer
 void Parser::parseADD(Instruction &instruction, std::vector<std::string> &split_line)
 {
   auto Rd = lut_.find(split_line.at(1));

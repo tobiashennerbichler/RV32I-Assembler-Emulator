@@ -1,2 +1,3 @@
 # RISC-V-Interpreter
-Basic RISC-V Interpreter for learning purposes
+Basic RISC-V Interpreter for learning purposes \
+Add this point only supports some basic instructions
