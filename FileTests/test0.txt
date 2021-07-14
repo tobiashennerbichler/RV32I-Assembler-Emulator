@@ -15,6 +15,8 @@ main:
     ADD t1, zero, zero
     SW t1, -16(fp)
 
+    JAL ra, loop
+
     ADDI t2, zero, 5
 
 loop:

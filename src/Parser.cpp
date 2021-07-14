@@ -2,15 +2,6 @@
 #include <iostream>
 #include <fstream>
 
-Parser *Parser::instance_ = 0;
-
-Parser *Parser::instance()
-{
-  if(!instance_)
-    instance_ = new Parser();
-  return instance_;
-}
-
 Parser::Parser()
 {
   //use this look-up table to translate string representation of registers into its index
@@ -26,13 +17,17 @@ Parser::Parser()
 
 Parser::~Parser()
 {
-  delete instance_;
+
 }
 
 /*
  * goes through the given file and separates each statement into instructions
+ * param instructions: vector that saves instructions for every line
+ * param filename: filename for file to be parsed
+ * return: true when file has been parsed
+ * return: false when file could not be opened
  */
-bool Parser::parse(std::vector<Instruction> &instructions, std::string filename)
+bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename)
 {
   std::fstream file = std::fstream(filename, std::ios::in);
 
@@ -48,8 +43,8 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string filename)
     if(!line.empty())
     {
       Instruction instruction = getInstruction(line);
-      printf("%s, %d, %d, %d, %d\n", instruction.name_.c_str(), instruction.Rd_, instruction.Rs1_,
-        instruction.Rs2_, instruction.imm_);
+      printf("name: %s, Rd: %d, Rs1: %d, Rs2: %d, imm: %d, label: %d\n", instruction.name_.c_str(), instruction.Rd_, instruction.Rs1_,
+        instruction.Rs2_, instruction.imm_, instruction.label_);
       instructions.push_back(instruction);
     }
   }
@@ -67,9 +62,11 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string filename)
 }
 
 /*
- * parses each line into instructions and checks for errors
+ * parses a line into instructions and checks for errors
+ * param line: line to be parsed
+ * return: Instructions in line
  */
-Instruction Parser::getInstruction(std::string line)
+Instruction Parser::getInstruction(std::string &line)
 {
   Instruction instruction;
   std::vector<std::string> split_line = splitLine(line);
@@ -81,28 +78,35 @@ Instruction Parser::getInstruction(std::string line)
   }
 
   instruction.name_ = split_line.at(0);
+  instruction.Rd_ = -1;
+  instruction.Rs1_ = -1;
+  instruction.Rs2_ = -1;
+  instruction.imm_ = -1;
+  instruction.label_ = false;
+  instruction.label_name_ = "";
 
-  //interpret single statements as labels with an ':' at the end as a label
-  //only save label without ':' though
-  if(split_line.size() == 1 && instruction.name_.back() == ':')
+  //interpret single statements with an ':' at the end as a label
+  if(instruction.name_.back() == ':')
   {
+    if(split_line.at(0).size() <= 1)
+    {
+      printf("label too small");
+      exit(-1);
+    }
+
+    //store label without ':'
     std::string label_name = split_line.at(0).substr(0, split_line.at(0).size() - 1);
     auto label = label_lut_.find(label_name);
     if(label == label_lut_.end())
     {
-      printf("insert and verify label %s\n", label_name.c_str());
-      label_lut_.insert({label_name, {label_count_++, true}});
+      label_lut_.insert({label_name, {true}});
     }
     else
     {
-      printf("verify label %s\n", label_name.c_str());
       label->second.verified_ = true;
     }
 
-    instruction.Rd_ = -1;
-    instruction.Rs1_ = -1;
-    instruction.Rs2_ = -1;
-    instruction.imm_ = -1;
+    instruction.label_ = true;
 
     return instruction;
   }
@@ -115,11 +119,6 @@ Instruction Parser::getInstruction(std::string line)
       printf("Invalid line\n");
       exit(-1);
     }
-
-    instruction.Rd_ = -1;
-    instruction.Rs1_ = -1;
-    instruction.Rs2_ = -1;
-    instruction.imm_ = -1;
   }
   else if(instruction.name_ == "JAL")
   {
@@ -202,7 +201,7 @@ std::vector<std::string> Parser::splitLine(std::string &line)
 void Parser::parseJAL(Instruction &instruction, std::vector<std::string> &split_line)
 {
   auto Rd = lut_.find(split_line.at(1));
-  auto imm = label_lut_.find(split_line.at(2));
+  auto label = label_lut_.find(split_line.at(2));
 
   if(Rd == lut_.end())
   {
@@ -210,17 +209,14 @@ void Parser::parseJAL(Instruction &instruction, std::vector<std::string> &split_
     exit(-1);
   }
 
-  if(imm == label_lut_.end())
+  if(label == label_lut_.end())
   {
-    printf("insert label %s\n", split_line.at(2).c_str());
-    label_lut_.insert({split_line.at(2), {label_count_++, false}});
-    imm = label_lut_.find(split_line.at(2));
+    label_lut_.insert({split_line.at(2), {false}});
+    label = label_lut_.find(split_line.at(2));
   }
 
   instruction.Rd_ = Rd->second;
-  instruction.Rs1_ = -1;
-  instruction.Rs2_ = -1;
-  instruction.imm_ = imm->second.count_;
+  instruction.label_name_ = split_line.at(2);
 }
 
 //TODO: maybe make a function for every instruction and there already pass the function pointer
@@ -239,7 +235,6 @@ void Parser::parseADD(Instruction &instruction, std::vector<std::string> &split_
   instruction.Rd_ = Rd->second;
   instruction.Rs1_ = Rs1->second;
   instruction.Rs2_ = Rs2->second;
-  instruction.imm_ = -1;
 }
 
 void Parser::parseLW(Instruction &instruction, std::vector<std::string> &split_line)
@@ -281,7 +276,6 @@ void Parser::parseLW(Instruction &instruction, std::vector<std::string> &split_l
 
   instruction.Rd_ = Rd->second;
   instruction.Rs1_ = Rs1->second;
-  instruction.Rs2_ = -1;
   instruction.imm_ = imm;
 }
 
@@ -322,7 +316,6 @@ void Parser::parseSW(Instruction &instruction, std::vector<std::string> &split_l
     exit(-1);
   }
 
-  instruction.Rd_ = -1;
   instruction.Rs1_ = Rs1->second;
   instruction.Rs2_ = Rs2->second;
   instruction.imm_ = imm;
@@ -365,7 +358,6 @@ void Parser::parseADDI(Instruction &instruction, std::vector<std::string> &split
 
   instruction.Rd_ = Rd->second;
   instruction.Rs1_ = Rs1->second;
-  instruction.Rs2_ = -1;
   instruction.imm_ = imm;
 }
 
@@ -373,7 +365,7 @@ void Parser::parseBEQ(Instruction &instruction, std::vector<std::string> &split_
 {
   auto Rs1 = lut_.find(split_line.at(1));
   auto Rs2 = lut_.find(split_line.at(2));
-  auto imm = label_lut_.find(split_line.at(3));
+  auto label = label_lut_.find(split_line.at(3));
 
   if(Rs1 == lut_.end() || Rs2 == lut_.end())
   {
@@ -381,17 +373,15 @@ void Parser::parseBEQ(Instruction &instruction, std::vector<std::string> &split_
     exit(-1);
   }
 
-  if(imm == label_lut_.end())
+  if(label == label_lut_.end())
   {
-    printf("insert label %s\n", split_line.at(3).c_str());
-    label_lut_.insert({split_line.at(3), {label_count_++, false}});
-    imm = label_lut_.find(split_line.at(3));
+    label_lut_.insert({split_line.at(3), {false}});
+    label = label_lut_.find(split_line.at(3));
   }
 
-  instruction.Rd_ = -1;
   instruction.Rs1_ = Rs1->second;
   instruction.Rs2_ = Rs2->second;
-  instruction.imm_ = imm->second.count_;
+  instruction.label_name_ = split_line.at(3);
 }
 
 bool Parser::isHex(std::string &line)

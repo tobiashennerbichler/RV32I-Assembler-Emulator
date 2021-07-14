@@ -1,3 +1,3 @@
 # RISC-V-Interpreter
-Basic RISC-V Interpreter for learning purposes \
-Add this point only supports some basic instructions
+Basic RV32I Assembler/Emulator for learning purposes \
+At this point only supports some basic instructions

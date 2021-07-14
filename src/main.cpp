@@ -1,10 +1,11 @@
 #include <iostream>
-#include "../include/Interpreter.h"
+#include "../include/Assembler.h"
 
 int main()
 {
-  Interpreter interpreter;
-  interpreter.run();
+  std::string file_name = "../RISC-V-Interpreter/FileTests/test0.txt";
+  CPU cpu;
+  Assembler assembler(cpu, file_name);
 
   return 0;
 }
