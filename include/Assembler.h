@@ -4,15 +4,14 @@
 class Assembler
 {
   public:
-    Assembler(CPU &cpu, std::string &filename);
+    Assembler(CPU &cpu);
     virtual ~Assembler();
+    void assemble(std::string file_name);
 
   private:
     CPU &cpu_;
     Parser parser_;
-    std::string file_name_;
     std::map<std::string, int> opcodes_;
-    void assemble();
     void assignLabelAddress(std::vector<Instruction> &instructions);
     u32 getHexRepresentation(Instruction &instruction);
 };

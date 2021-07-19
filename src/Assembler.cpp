@@ -1,12 +1,10 @@
 #include "../include/Assembler.h"
 
-Assembler::Assembler(CPU &cpu, std::string &filename) : cpu_(cpu), file_name_(filename)
+Assembler::Assembler(CPU &cpu) : cpu_(cpu)
 {
   opcodes_ = {{"EBREAK", 0x0}, {"ADD", 0x1}, {"ADDI", 0x2}, {"SUB", 0x3}, {"SW", 0x4},
               {"LW", 0x5}, {"JAL", 0x6}, {"JALR", 0x7}, {"BEQ", 0x8},
               {"BNE", 0x9}, {"BLT", 0xA}, {"BGE", 0xB}};
-
-  assemble();
 }
 
 Assembler::~Assembler()
@@ -17,21 +15,16 @@ Assembler::~Assembler()
 /*
  * Transforms instructions into machine code and writes it into memory for CPU to execute
  */
-void Assembler::assemble()
+void Assembler::assemble(std::string file_name)
 {
   std::vector<Instruction> instructions;
-  parser_.parse(instructions, file_name_);
+  parser_.parse(instructions, file_name);
   u32 addr = 0;
 
   assignLabelAddress(instructions);
 
   for(auto &instruction : instructions)
   {
-    if(instruction.label_)
-    {
-      continue;
-    }
-
     u32 machine_code = getHexRepresentation(instruction);
     cpu_.write(addr, machine_code);
     addr += 4;
@@ -40,6 +33,11 @@ void Assembler::assemble()
   for(u32 address = 0; address < addr; address += 4)
   {
     printf("0x%x\n", cpu_.read(address));
+  }
+
+  for(auto &label : parser_.label_lut_)
+  {
+    printf("address of %s: 0x%x\n", label.first.c_str(), label.second.address_);
   }
 }
 
@@ -50,34 +48,10 @@ void Assembler::assemble()
  */
 void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 {
-  u32 addr = 0;
-
-  //give each label an address
-  for(auto &instruction : instructions)
-  {
-    if(instruction.label_)
-    {
-      std::string label_name = instruction.name_.substr(0, instruction.name_.size() - 1);
-      auto label = parser_.label_lut_.find(label_name);
-
-      if(label == parser_.label_lut_.end())
-      {
-        printf("label %s not stored\n", label_name.c_str());
-        exit(-1);
-      }
-
-      label->second.address_ = addr;
-    }
-    else
-    {
-      addr += 4;
-    }
-  }
-
   //search for use of label and replace it with address
   for(auto &instruction : instructions)
   {
-    if(instruction.label_ || instruction.label_name_ == "")
+    if(instruction.label_name_ == "")
     {
       continue;
     }

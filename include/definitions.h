@@ -16,6 +16,8 @@
 #define IMM7_SHIFT 25
 #define IMM20_MASK 0xFFFFF000
 #define IMM20_SHIFT 12
+#define SIGN_MASK 0x80000000
+#define SIGN_SHIFT 31
 
 typedef uint32_t u32;
 typedef int32_t s32;
@@ -28,7 +30,6 @@ struct Instruction
   int Rs1_;
   int Rs2_;
   int imm_;
-  bool label_;
   std::string label_name_;
 };
 

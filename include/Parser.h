@@ -13,11 +13,13 @@ class Parser
     std::map<std::string, Label> label_lut_;
 
   private:
-    Instruction getInstruction(std::string &line);
+    Instruction getInstruction(std::vector<std::string> &split_line);
     std::vector<std::string> splitLine(std::string &line);
     std::map<std::string, int> lut_;
-    int label_count_ = 0;
+    u32 line_count_ = 0;
 
+    void reset();
+    void parseLabel(std::vector<std::string> &split_line);
     void parseJAL(Instruction &instruction, std::vector<std::string> &split_line);
     void parseADD(Instruction &instruction, std::vector<std::string> &split_line);
     void parseLW(Instruction &instruction, std::vector<std::string> &split_line);

@@ -5,7 +5,8 @@ int main()
 {
   std::string file_name = "../RISC-V-Interpreter/FileTests/test0.txt";
   CPU cpu;
-  Assembler assembler(cpu, file_name);
+  Assembler assembler(cpu);
+  assembler.assemble(file_name);
 
   return 0;
 }
