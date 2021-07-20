@@ -1,10 +1,9 @@
 #include "../include/Assembler.h"
+#include <fstream>
 
 Assembler::Assembler(CPU &cpu) : cpu_(cpu)
 {
-  opcodes_ = {{"EBREAK", 0x0}, {"ADD", 0x1}, {"ADDI", 0x2}, {"SUB", 0x3}, {"SW", 0x4},
-              {"LW", 0x5}, {"JAL", 0x6}, {"JALR", 0x7}, {"BEQ", 0x8},
-              {"BNE", 0x9}, {"BLT", 0xA}, {"BGE", 0xB}};
+  opcodes_ = {{"EBREAK", {0x00, 0x00, 0x00}}};
 }
 
 Assembler::~Assembler()
@@ -26,14 +25,30 @@ void Assembler::assemble(std::string file_name)
   for(auto &instruction : instructions)
   {
     u32 machine_code = getHexRepresentation(instruction);
-    cpu_.write(addr, machine_code);
-    addr += 4;
+
+    for(int i = 0; i < 4; i++)
+    {
+      cpu_.write(addr, (u8) machine_code);
+      addr++;
+      machine_code >>= 8;
+    }
   }
 
-  for(u32 address = 0; address < addr; address += 4)
+  std::fstream file = std::fstream("../memory.bin", std::ios::out | std::ios::binary);
+
+  if(!file.is_open())
   {
-    printf("0x%x\n", cpu_.read(address));
+    printf("file not open\n");
+    exit(-1);
   }
+
+  for(u32 address = 0; address < addr; address++)
+  {
+    u8 byte = cpu_.read(address);
+    file.write((char *) &byte, sizeof(u8));
+  }
+
+  file.flush();
 
   for(auto &label : parser_.label_lut_)
   {
@@ -86,7 +101,7 @@ void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 u32 Assembler::getHexRepresentation(Instruction &instruction)
 {
   u32 hex = 0;
-  u32 opcode = opcodes_.find(instruction.name_)->second;
+  u32 opcode = opcodes_.find(instruction.name_)->second.opcode_;
   hex |= (opcode & OPCODE_MASK);
 
   if(instruction.name_ == "ADD" || instruction.name_ == "SUB")

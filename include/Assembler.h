@@ -11,7 +11,7 @@ class Assembler
   private:
     CPU &cpu_;
     Parser parser_;
-    std::map<std::string, int> opcodes_;
+    std::map<std::string, InstrInfo> opcodes_;
     void assignLabelAddress(std::vector<Instruction> &instructions);
     u32 getHexRepresentation(Instruction &instruction);
 };

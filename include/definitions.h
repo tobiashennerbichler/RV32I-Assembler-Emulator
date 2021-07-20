@@ -21,8 +21,11 @@
 
 typedef uint32_t u32;
 typedef int32_t s32;
+typedef uint8_t u8;
+typedef int8_t s8;
+typedef uint16_t u16;
+typedef int16_t s16;
 
-//TODO: maybe change this
 struct Instruction
 {
   std::string name_;
@@ -37,6 +40,13 @@ struct Label
 {
   bool verified_;
   u32 address_;
+};
+
+struct InstrInfo
+{
+  int opcode_;
+  int func3_;
+  int func7_;
 };
 
 /*
