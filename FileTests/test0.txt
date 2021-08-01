@@ -8,6 +8,7 @@ main:
     SW ra, 12(sp)
     SW fp, 8(sp)
     ADDI fp, sp, 16
+    ADDI t4, t3, -1
 
     ADD t0, zero, zero
     SW t0, -12(fp)

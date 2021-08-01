@@ -2,22 +2,6 @@
 #include <string>
 
 #define OPCODE_MASK 0x7F
-#define RD_MASK 0xF80
-#define RD_SHIFT 7
-#define RS1_MASK 0xF8000
-#define RS1_SHIFT 15
-#define RS2_MASK 0x1F00000
-#define RS2_SHIFT 20
-#define IMM12_MASK 0xFFF00000
-#define IMM12_SHIFT 20
-#define IMM5_MASK 0xF80
-#define IMM5_SHIFT 7
-#define IMM7_MASK 0xFE000000
-#define IMM7_SHIFT 25
-#define IMM20_MASK 0xFFFFF000
-#define IMM20_SHIFT 12
-#define SIGN_MASK 0x80000000
-#define SIGN_SHIFT 31
 
 typedef uint32_t u32;
 typedef int32_t s32;
@@ -25,6 +9,18 @@ typedef uint8_t u8;
 typedef int8_t s8;
 typedef uint16_t u16;
 typedef int16_t s16;
+
+enum InstructionType
+{
+  U_TYPE,
+  J_TYPE,
+  R_TYPE,
+  I_TYPE,
+  I_TYPE2,
+  S_TYPE,
+  B_TYPE,
+  NONE
+};
 
 struct Instruction
 {
@@ -42,11 +38,12 @@ struct Label
   u32 address_;
 };
 
-struct InstrInfo
+struct InstructionInfo
 {
   int opcode_;
   int func3_;
   int func7_;
+  InstructionType type_;
 };
 
 /*
