@@ -102,38 +102,33 @@ void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 u32 Assembler::getHexRepresentation(Instruction &instruction)
 {
   u32 hex = 0;
-  //TODO: get the instruction info into instruction in parsing?
   InstructionInfo instruction_info = instruction.info_;
   hex |= (instruction_info.opcode_ & OPCODE_MASK);
 
   //TODO: make function pointer
-  if(instruction_info.type_ == U_TYPE)
+  switch(instruction_info.type_)
   {
-    UType(hex, instruction);
-  }
-  else if(instruction_info.type_ == J_TYPE)
-  {
-    JType(hex, instruction);
-  }
-  else if(instruction_info.type_ == R_TYPE)
-  {
-    RType(hex, instruction);
-  }
-  else if(instruction_info.type_ == I_TYPE)
-  {
-    IType(hex, instruction);
-  }
-  else if(instruction_info.type_ == I_TYPE2)
-  {
-    I2Type(hex, instruction);
-  }
-  else if(instruction_info.type_ == S_TYPE)
-  {
-    SType(hex, instruction);
-  }
-  else if(instruction_info.type_ == B_TYPE)
-  {
-    BType(hex, instruction);
+    case U_TYPE:
+      UType(hex, instruction);
+      break;
+    case J_TYPE:
+      JType(hex, instruction);
+      break;
+    case R_TYPE:
+      RType(hex, instruction);
+      break;
+    case I_TYPE:
+      IType(hex, instruction);
+      break;
+    case I_TYPE2:
+      I2Type(hex, instruction);
+      break;
+    case S_TYPE:
+      SType(hex, instruction);
+      break;
+    case B_TYPE:
+      BType(hex, instruction);
+      break;
   }
 
   return hex;
@@ -184,7 +179,7 @@ void Assembler::I2Type(u32 &hex, Instruction &instruction)
   hex |= (((u32) instruction.Rd_ << 7) & 0xF80);
   hex |= ((instruction_info.func3_ << 12) & 0x7000);
   hex |= (((u32) instruction.Rs1_ << 15) & 0xF8000);
-  //TODO: shamt?
+  hex |= (((u32) instruction.imm_ << 20) & 0x1F00000);
   hex |= ((instruction_info.func7_ << 25) & 0xFE000000);
 }
 

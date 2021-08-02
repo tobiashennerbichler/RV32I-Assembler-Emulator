@@ -17,7 +17,7 @@ Parser::Parser()
   info_lut_ = {
     {"EBREAK", {0x73, 0x00, 0x00, I_TYPE}},
     {"LUI", {0x37, 0x00, 0x00, U_TYPE}},
-    {"AUIPC", {0x37, 0x00, 0x00, U_TYPE}},
+    {"AUIPC", {0x27, 0x00, 0x00, U_TYPE}},
     {"JAL", {0x6F, 0x00, 0x00, J_TYPE}},
     {"JALR", {0x67, 0x00, 0x00, I_TYPE}},
     {"BEQ", {0x63, 0x00, 0x00, B_TYPE}},
@@ -111,7 +111,7 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename
   {
     if(!label.second.verified_)
     {
-      printf("label %s not verified\n", label.first.c_str());
+      printf("Label \"%s\" not verified\n", label.first.c_str());
       exit(-1);
     }
   }
@@ -242,9 +242,9 @@ std::vector<std::string> Parser::splitLine(std::string &line)
 
 void Parser::parseLabel(std::vector<std::string> &split_line)
 {
-  if(split_line.at(0).size() <= 1)
+  if(split_line.at(0).size() <= 1 || split_line.size() != 1)
   {
-    printf("label too small");
+    printf("Not a label\n");
     exit(-1);
   }
 
@@ -375,7 +375,7 @@ void Parser::parseBType(Instruction &instruction, std::vector<std::string> &spli
 
   if(Rs1 == register_lut_.end() || Rs2 == register_lut_.end())
   {
-    printf("Error with register parsing in BEQ/BNE/BLT/BGE\n");
+    printf("Error with register parsing in BType\n");
     exit(-1);
   }
 
@@ -410,6 +410,7 @@ void Parser::getImm(int &imm, std::string &line)
     catch(std::exception &e)
     {
       printf("Error with immediate parsing: %s\n", e.what());
+      exit(-1);
     }
   }
   else
@@ -421,6 +422,7 @@ void Parser::getImm(int &imm, std::string &line)
     catch(std::exception &e)
     {
       printf("Error with immediate parsing: %s\n", e.what());
+      exit(-1);
     }
   }
 }
