@@ -18,8 +18,15 @@ enum InstructionType
   I_TYPE,
   I_TYPE2,
   S_TYPE,
-  B_TYPE,
-  NONE
+  B_TYPE
+};
+
+struct InstructionInfo
+{
+  int opcode_;
+  int func3_;
+  int func7_;
+  InstructionType type_;
 };
 
 struct Instruction
@@ -30,20 +37,13 @@ struct Instruction
   int Rs2_;
   int imm_;
   std::string label_name_;
+  InstructionInfo info_;
 };
 
 struct Label
 {
   bool verified_;
   u32 address_;
-};
-
-struct InstructionInfo
-{
-  int opcode_;
-  int func3_;
-  int func7_;
-  InstructionType type_;
 };
 
 /*

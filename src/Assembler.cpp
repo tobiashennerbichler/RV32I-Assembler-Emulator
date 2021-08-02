@@ -4,23 +4,6 @@
 Assembler::Assembler(CPU &cpu) : cpu_(cpu)
 {
   //TODO: make EBREAK I_TYPE and set imm so the 20th bit is 1
-  opcodes_ = {{"EBREAK", {0x73, 0x00, 0x00, NONE}},
-              {"LUI", {0x37, 0x00, 0x00, U_TYPE}},
-              {"AUIPC", {0x37, 0x00, 0x00, U_TYPE}},
-              {"JAL", {0x6F, 0x00, 0x00, J_TYPE}},
-              {"JALR", {0x67, 0x00, 0x00, I_TYPE}},
-              {"BEQ", {0x63, 0x00, 0x00, B_TYPE}},
-              {"BNE", {0x63, 0x01, 0x00, B_TYPE}},
-              {"BLT", {0x63, 0x04, 0x00, B_TYPE}},
-              {"BGE", {0x63, 0x05, 0x00, B_TYPE}},
-              {"BLTU", {0x63, 0x06, 0x00, B_TYPE}},
-              {"BGEU", {0x63, 0x07, 0x00, B_TYPE}},
-              {"LB", {0x03, 0x00, 0x00, I_TYPE}},
-              {"LH", {0x03, 0x01, 0x00, I_TYPE}},
-              {"LW", {0x03, 0x02, 0x00, I_TYPE}},
-              {"LBU", {0x03, 0x04, 0x00, I_TYPE}},
-              {"LHU", {0x03, 0x05, 0x00, I_TYPE}},
-              {"ADDI", {0x13, 0x00, 0x00, I_TYPE}}};
 }
 
 Assembler::~Assembler()
@@ -120,35 +103,35 @@ u32 Assembler::getHexRepresentation(Instruction &instruction)
 {
   u32 hex = 0;
   //TODO: get the instruction info into instruction in parsing?
-  auto instruction_info = opcodes_.find(instruction.name_);
-  hex |= (instruction_info->second.opcode_ & OPCODE_MASK);
+  InstructionInfo instruction_info = instruction.info_;
+  hex |= (instruction_info.opcode_ & OPCODE_MASK);
 
   //TODO: make function pointer
-  if(instruction_info->second.type_ == U_TYPE)
+  if(instruction_info.type_ == U_TYPE)
   {
     UType(hex, instruction);
   }
-  else if(instruction_info->second.type_ == J_TYPE)
+  else if(instruction_info.type_ == J_TYPE)
   {
     JType(hex, instruction);
   }
-  else if(instruction_info->second.type_ == R_TYPE)
+  else if(instruction_info.type_ == R_TYPE)
   {
     RType(hex, instruction);
   }
-  else if(instruction_info->second.type_ == I_TYPE)
+  else if(instruction_info.type_ == I_TYPE)
   {
     IType(hex, instruction);
   }
-  else if(instruction_info->second.type_ == I_TYPE2)
+  else if(instruction_info.type_ == I_TYPE2)
   {
     I2Type(hex, instruction);
   }
-  else if(instruction_info->second.type_ == S_TYPE)
+  else if(instruction_info.type_ == S_TYPE)
   {
     SType(hex, instruction);
   }
-  else if(instruction_info->second.type_ == B_TYPE)
+  else if(instruction_info.type_ == B_TYPE)
   {
     BType(hex, instruction);
   }
@@ -175,7 +158,7 @@ void Assembler::JType(u32 &hex, Instruction &instruction)
 
 void Assembler::RType(u32 &hex, Instruction &instruction)
 {
-  InstructionInfo instruction_info = opcodes_.find(instruction.name_)->second;
+  InstructionInfo instruction_info = instruction.info_;
 
   hex |= (((u32) instruction.Rd_ << 7) & 0xF80);
   hex |= ((instruction_info.func3_ << 12) & 0x7000);
@@ -186,7 +169,7 @@ void Assembler::RType(u32 &hex, Instruction &instruction)
 
 void Assembler::IType(u32 &hex, Instruction &instruction)
 {
-  InstructionInfo instruction_info = opcodes_.find(instruction.name_)->second;
+  InstructionInfo instruction_info = instruction.info_;
 
   hex |= (((u32) instruction.Rd_ << 7) & 0xF80);
   hex |= ((instruction_info.func3_ << 12) & 0x7000);
@@ -196,7 +179,7 @@ void Assembler::IType(u32 &hex, Instruction &instruction)
 
 void Assembler::I2Type(u32 &hex, Instruction &instruction)
 {
-  InstructionInfo instruction_info = opcodes_.find(instruction.name_)->second;
+  InstructionInfo instruction_info = instruction.info_;
 
   hex |= (((u32) instruction.Rd_ << 7) & 0xF80);
   hex |= ((instruction_info.func3_ << 12) & 0x7000);
@@ -207,7 +190,7 @@ void Assembler::I2Type(u32 &hex, Instruction &instruction)
 
 void Assembler::SType(u32 &hex, Instruction &instruction)
 {
-  InstructionInfo instruction_info = opcodes_.find(instruction.name_)->second;
+  InstructionInfo instruction_info = instruction.info_;
 
   hex |= (((u32) instruction.imm_ << 7) & 0xF80);
   hex |= ((instruction_info.func3_ << 12) & 0x7000);
@@ -218,7 +201,7 @@ void Assembler::SType(u32 &hex, Instruction &instruction)
 
 void Assembler::BType(u32 &hex, Instruction &instruction)
 {
-  InstructionInfo instruction_info = opcodes_.find(instruction.name_)->second;
+  InstructionInfo instruction_info = instruction.info_;
 
   u32 imm11 = (instruction.imm_ >> 4) & 0x80;
   u32 imm41 = (instruction.imm_ << 7) & 0xF00;

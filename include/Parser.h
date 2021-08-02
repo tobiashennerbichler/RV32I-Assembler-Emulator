@@ -15,17 +15,19 @@ class Parser
   private:
     Instruction getInstruction(std::vector<std::string> &split_line);
     std::vector<std::string> splitLine(std::string &line);
-    std::map<std::string, int> lut_;
+    std::map<std::string, int> register_lut_;
+    std::map<std::string, InstructionInfo> info_lut_;
     u32 line_count_ = 0;
 
     void reset();
     void parseLabel(std::vector<std::string> &split_line);
-    void parseJAL(Instruction &instruction, std::vector<std::string> &split_line);
-    void parseADD(Instruction &instruction, std::vector<std::string> &split_line);
-    void parseLW(Instruction &instruction, std::vector<std::string> &split_line);
-    void parseSW(Instruction &instruction, std::vector<std::string> &split_line);
-    void parseADDI(Instruction &instruction, std::vector<std::string> &split_line);
-    void parseBEQ(Instruction &instruction, std::vector<std::string> &split_line);
+    void parseUType(Instruction &instruction, std::vector<std::string> &split_line);
+    void parseJType(Instruction &instruction, std::vector<std::string> &split_line);
+    void parseRType(Instruction &instruction, std::vector<std::string> &split_line);
+    void parseIType(Instruction &instruction, std::vector<std::string> &split_line);
+    void parseSType(Instruction &instruction, std::vector<std::string> &split_line);
+    void parseBType(Instruction &instruction, std::vector<std::string> &split_line);
+    void getImm(int &imm, std::string &line);
 
     bool isHex(std::string &line);
 };
