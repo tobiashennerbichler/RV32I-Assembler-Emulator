@@ -44,13 +44,10 @@ CPU::CPU() : memory_(0x10000), pc_(0)
       {{0x33, 0x07, 0x00, R_TYPE}, &CPU::AND}
   };
 
-  //U_TYPE: 0x37, 0x17
-  //J_TYPE: 0x6F
-  //R_TYPE: 0x33
-  //I_TYPE: 0x67, 0x03, 0x13, 0x73
-  //I_TYPE2: 0x13
-  //S_TYPE: 0x23
-  //B_TYPE: 0x63
+  for(int i = 0; i < 32; i++)
+  {
+    registers_[i] = 0;
+  }
 }
 
 CPU::~CPU()
@@ -78,6 +75,7 @@ void CPU::tick()
     word |= (read(addr++) << i*8);
   }
 
+  printf("read word: 0x%x from: 0x%x, sp: 0x%x\n", word, pc_, registers_[2]);
   InstructionInfo info = getInfo(word);
   if((this->*instruction_lut_.at(info))(word))
   {
@@ -139,7 +137,7 @@ InstructionInfo CPU::getInfo(u32 word)
   }
   else
   {
-    printf("unknown instruction\n");
+    printf("unknown instruction: 0x%x\n", word);
     exit(-1);
   }
 
@@ -159,7 +157,7 @@ void CPU::getJType(u32 word, u32 &rd_number, u32 &imm)
   rd_number = (word >> 7) & 0x1F;
   imm = (word & 0xFF000) | ((word >> 9) & 0x800) | ((word >> 20) & 0x7FE);
 
-  extendBit(imm, 20);
+  imm = extendBit(imm, 20);
 }
 
 void CPU::getRType(u32 word, u32 &rd_number, u32 &rs1_number, u32 &rs2_number)
@@ -175,7 +173,7 @@ void CPU::getIType(u32 word, u32 &rd_number, u32 &rs1_number, u32 &imm)
   rs1_number = ((word >> 15) & 0x1F);
   imm = ((word >> 20) & 0xFFF);
 
-  extendBit(imm, 11);
+  imm = extendBit(imm, 11);
 }
 
 void CPU::getI2Type(u32 word, u32 &rd_number, u32 &rs1_number, u32 &shamt)
@@ -191,7 +189,7 @@ void CPU::getSType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm)
   rs2_number = ((word >> 20) & 0x1F);
   imm = ((word >> 20) & 0xFE0) | ((word >> 7) & 0x1F);
 
-  extendBit(imm, 11);
+  imm = extendBit(imm, 11);
 }
 
 void CPU::getBType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm)
@@ -200,7 +198,7 @@ void CPU::getBType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm)
   rs2_number = ((word >> 20) & 0x1F);
   imm = ((word >> 19) & 0x1000) | ((word << 4) & 0x800) | ((word >> 20) & 0x7E0) | ((word >> 7) & 0x1E);
 
-  extendBit(imm, 12);
+  imm = extendBit(imm, 12);
 }
 
 u32 CPU::extendBit(u32 word, u8 bit)
@@ -230,6 +228,8 @@ bool CPU::ADDI(u32 word)
 {
   u32 rd_number, rs1_number, imm;
   getIType(word, rd_number, rs1_number, imm);
+
+  printf("imm: %d\n", imm);
 
   registers_[rd_number] = registers_[rs1_number] + imm;
   return true;

@@ -46,11 +46,13 @@ void Assembler::assemble(std::string file_name)
  */
 void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 {
+  u32 addr = 0;
   //search for use of label and replace it with address
   for(auto &instruction : instructions)
   {
     if(instruction.label_name_ == "")
     {
+      addr += 4;
       continue;
     }
 
@@ -62,7 +64,8 @@ void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
       exit(-1);
     }
 
-    instruction.imm_ = label->second.address_;
+    instruction.imm_ = label->second.address_ - addr;
+    addr += 4;
   }
 }
 
