@@ -350,8 +350,8 @@ void Parser::parseIType(Instruction &instruction, std::vector<std::string> &spli
 
 void Parser::parseSType(Instruction &instruction, std::vector<std::string> &split_line)
 {
-  auto Rs1 = register_lut_.find(split_line.at(1));
-  auto Rs2 = register_lut_.find(split_line.at(3));
+  auto Rs1 = register_lut_.find(split_line.at(3));
+  auto Rs2 = register_lut_.find(split_line.at(1));
   int imm = 0;
 
   getImm(imm, split_line.at(2));

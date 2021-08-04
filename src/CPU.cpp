@@ -150,8 +150,6 @@ void CPU::getUType(u32 word, u32 &rd_number, u32 &imm)
   imm = word & 0xFFFFF000;
 }
 
-//TODO: this can 99.9% be done better
-//TODO: make some sign extend functions for later
 void CPU::getJType(u32 word, u32 &rd_number, u32 &imm)
 {
   rd_number = (word >> 7) & 0x1F;
@@ -228,8 +226,6 @@ bool CPU::ADDI(u32 word)
 {
   u32 rd_number, rs1_number, imm;
   getIType(word, rd_number, rs1_number, imm);
-
-  printf("imm: %d\n", imm);
 
   registers_[rd_number] = registers_[rs1_number] + imm;
   return true;
