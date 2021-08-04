@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <string>
 
@@ -29,13 +31,33 @@ struct InstructionInfo
   InstructionType type_;
 };
 
+inline bool operator<(const InstructionInfo &i1, const InstructionInfo &i2)
+{
+  if(i1.opcode_ != i2.opcode_)
+  {
+    return i1.opcode_ < i2.opcode_;
+  }
+  else if(i1.func3_ != i2.func3_)
+  {
+    return i1.func3_ < i2.func3_;
+  }
+  else if(i1.func7_ != i2.func7_)
+  {
+    return i1.func7_ < i2.func7_;
+  }
+  else
+  {
+    return i1.type_ < i2.type_;
+  }
+}
+
 struct Instruction
 {
   std::string name_;
-  int Rd_;
-  int Rs1_;
-  int Rs2_;
-  int imm_;
+  u32 Rd_;
+  u32 Rs1_;
+  u32 Rs2_;
+  u32 imm_;
   std::string label_name_;
   InstructionInfo info_;
 };

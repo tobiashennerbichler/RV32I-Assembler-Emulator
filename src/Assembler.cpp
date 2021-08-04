@@ -1,16 +1,6 @@
 #include "../include/Assembler.h"
 #include <fstream>
 
-Assembler::Assembler(CPU &cpu) : cpu_(cpu)
-{
-  //TODO: make EBREAK I_TYPE and set imm so the 20th bit is 1
-}
-
-Assembler::~Assembler()
-{
-
-}
-
 /*
  * Transforms instructions into machine code and writes it into memory for CPU to execute
  */
@@ -18,7 +8,14 @@ void Assembler::assemble(std::string file_name)
 {
   std::vector<Instruction> instructions;
   parser_.parse(instructions, file_name);
-  u32 addr = 0;
+
+  std::fstream file = std::fstream("../memory.bin", std::ios::out | std::ios::binary);
+
+  if(!file.is_open())
+  {
+    printf("file not open\n");
+    exit(-1);
+  }
 
   assignLabelAddress(instructions);
 
@@ -29,27 +26,11 @@ void Assembler::assemble(std::string file_name)
 
     for(int i = 0; i < 4; i++)
     {
-      cpu_.write(addr, (u8) machine_code);
-      addr++;
+      u8 byte = (u8) machine_code;
+      file.write((char *) &byte, sizeof(u8));
       machine_code >>= 8;
     }
   }
-
-  std::fstream file = std::fstream("../memory.bin", std::ios::out | std::ios::binary);
-
-  if(!file.is_open())
-  {
-    printf("file not open\n");
-    exit(-1);
-  }
-
-  for(u32 address = 0; address < addr; address++)
-  {
-    u8 byte = cpu_.read(address);
-    file.write((char *) &byte, sizeof(u8));
-  }
-
-  file.flush();
 
   for(auto &label : parser_.label_lut_)
   {
@@ -85,17 +66,7 @@ void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 }
 
 /*
- * puts instruction into right format:
- *
- *  funct7   rs2   rs1  funct3 rd  opcode
- * |-------|-----|-----|---|-----|-------| <-- R-type (ADD, SUB)
- *   imm12        rs1  funct3 rd  opcode
- * |------------|-----|---|-----|-------| <-- I-type (LW, JALR, ADDI)
- *    imm7   rs2   rs1  funct3 imm5 opcode
- * |-------|-----|-----|---|-----|-------| <-- S-type (SW, BEQ, BNE, BLT, BGE)
- *           imm20         rd   opcode
- * |--------------------|-----|-------| <-- U-type (JAL)
- *
+ * puts instruction into right format
  * param: instruction to transform
  * return: hex representation of instruction
  */

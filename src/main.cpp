@@ -1,12 +1,14 @@
 #include <iostream>
 #include "../include/Assembler.h"
+#include "../include/Emulator.h"
 
 int main()
 {
   std::string file_name = "../FileTests/test0.txt";
-  CPU cpu;
-  Assembler assembler(cpu);
+  Assembler assembler;
   assembler.assemble(file_name);
+  Emulator emulator;
+  emulator.loadBinary();
 
   return 0;
 }
