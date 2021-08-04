@@ -17,6 +17,7 @@ void Assembler::assemble(std::string file_name)
     exit(-1);
   }
 
+  //TODO: fix assignment so it works with relative addresses
   assignLabelAddress(instructions);
 
   for(auto &instruction : instructions)

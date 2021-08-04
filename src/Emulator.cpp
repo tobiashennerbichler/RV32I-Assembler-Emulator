@@ -12,9 +12,12 @@ void Emulator::loadBinary()
     file.read((char *) &byte, sizeof(u8));
     cpu_.write(address++, byte);
   }
+}
 
-  for(u32 addr = 0; addr < (address - 1); addr++)
+[[noreturn]] void Emulator::run()
+{
+  while(true)
   {
-    printf("0x%x ", cpu_.read(addr));
+    cpu_.tick();
   }
 }

@@ -9,6 +9,7 @@ int main()
   assembler.assemble(file_name);
   Emulator emulator;
   emulator.loadBinary();
+  emulator.run();
 
   return 0;
 }

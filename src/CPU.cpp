@@ -1,6 +1,7 @@
+#include <cassert>
 #include "../include/CPU.h"
 
-CPU::CPU() : memory_(0x10000)
+CPU::CPU() : memory_(0x10000), pc_(0)
 {
   instruction_lut_ = {
       {{0x73, 0x00, 0x00, I_TYPE}, &CPU::EBREAK},
@@ -67,193 +68,535 @@ void CPU::write(u32 address, u8 data)
   memory_.at(address) = data;
 }
 
-void CPU::ADD(u32 word)
+void CPU::tick()
 {
+  u32 word = 0;
+  u32 addr = pc_;
 
+  for(int i = 0; i < 4; i++)
+  {
+    word |= (read(addr++) << i*8);
+  }
+
+  InstructionInfo info = getInfo(word);
+  if((this->*instruction_lut_.at(info))(word))
+  {
+    pc_ += 4;
+  }
 }
 
-void CPU::ADDI(u32 word)
+InstructionInfo CPU::getInfo(u32 word)
 {
+  u32 opcode = (word & 0x7F);
+  InstructionInfo info;
 
+  if(opcode == 0x37 || opcode == 0x17)
+  {
+    info = {opcode, 0x00, 0x00, U_TYPE};
+  }
+  else if(opcode == 0x6F)
+  {
+    info = {opcode, 0x00, 0x00, J_TYPE};
+  }
+  else if(opcode == 0x33)
+  {
+    u32 func3 = ((word >> 12) & 0x7);
+    u32 func7 = ((word >> 25) & 0x7F);
+    info = {opcode, func3, func7, R_TYPE};
+  }
+  else if(opcode == 0x67 || opcode == 0x03)
+  {
+    u32 func3 = ((word >> 12) & 0x7);
+    info = {opcode, func3, 0x00, I_TYPE};
+  }
+  else if(opcode == 0x13)
+  {
+    u32 func3 = ((word >> 12) & 0x7);
+
+    if(func3 == 0x01 || func3 == 0x05)
+    {
+      u32 func7 = ((word >> 25) & 0x7F);
+      info = {opcode, func3, func7, I_TYPE2};
+    }
+    else
+    {
+      info = {opcode, func3, 0x00, I_TYPE};
+    }
+  }
+  else if(opcode == 0x23)
+  {
+    u32 func3 = ((word >> 12) & 0x7);
+    info = {opcode, func3, 0x00, S_TYPE};
+  }
+  else if(opcode == 0x63)
+  {
+    u32 func3 = ((word >> 12) & 0x7);
+    info = {opcode, func3, 0x00, B_TYPE};
+  }
+  else if(opcode == 0x73)
+  {
+    info = {opcode, 0x00, 0x00, I_TYPE};
+  }
+  else
+  {
+    printf("unknown instruction\n");
+    exit(-1);
+  }
+
+  return info;
 }
 
-void CPU::AND(u32 word)
+void CPU::getUType(u32 word, u32 &rd_number, u32 &imm)
 {
-
+  rd_number = (word >> 7) & 0x1F;
+  imm = word & 0xFFFFF000;
 }
 
-void CPU::ANDI(u32 word)
+//TODO: this can 99.9% be done better
+//TODO: make some sign extend functions for later
+void CPU::getJType(u32 word, u32 &rd_number, u32 &imm)
 {
+  rd_number = (word >> 7) & 0x1F;
+  imm = (word & 0xFF000) | ((word >> 9) & 0x800) | ((word >> 20) & 0x7FE);
 
+  extendBit(imm, 20);
 }
 
-void CPU::AUIPC(u32 word)
+void CPU::getRType(u32 word, u32 &rd_number, u32 &rs1_number, u32 &rs2_number)
 {
-
+  rd_number = ((word >> 7) & 0x1F);
+  rs1_number = ((word >> 15) & 0x1F);
+  rs2_number = ((word >> 20) & 0x1F);
 }
 
-void CPU::BEQ(u32 word)
+void CPU::getIType(u32 word, u32 &rd_number, u32 &rs1_number, u32 &imm)
 {
+  rd_number = ((word >> 7) & 0x1F);
+  rs1_number = ((word >> 15) & 0x1F);
+  imm = ((word >> 20) & 0xFFF);
 
+  extendBit(imm, 11);
 }
 
-void CPU::BGE(u32 word)
+void CPU::getI2Type(u32 word, u32 &rd_number, u32 &rs1_number, u32 &shamt)
 {
-
+  rd_number = ((word >> 7) & 0x1F);
+  rs1_number = ((word >> 15) & 0x1F);
+  shamt = ((word >> 20) & 0x1F);
 }
 
-void CPU::BGEU(u32 word)
+void CPU::getSType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm)
 {
+  rs1_number = ((word >> 15) & 0x1F);
+  rs2_number = ((word >> 20) & 0x1F);
+  imm = ((word >> 20) & 0xFE0) | ((word >> 7) & 0x1F);
 
+  extendBit(imm, 11);
 }
 
-void CPU::BLT(u32 word)
+void CPU::getBType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm)
 {
+  rs1_number = ((word >> 15) & 0x1F);
+  rs2_number = ((word >> 20) & 0x1F);
+  imm = ((word >> 19) & 0x1000) | ((word << 4) & 0x800) | ((word >> 20) & 0x7E0) | ((word >> 7) & 0x1E);
 
+  extendBit(imm, 12);
 }
 
-void CPU::BLTU(u32 word)
+u32 CPU::extendBit(u32 word, u8 bit)
 {
+  assert(bit < 32 && "signExtendBit: bit too high");
 
+  u32 extended_word = word;
+
+  for(int i = 1; i < (32 - bit); i++)
+  {
+    extended_word |= ((word & (0x1 << bit)) << i);
+  }
+
+  return extended_word;
 }
 
-void CPU::BNE(u32 word)
+bool CPU::ADD(u32 word)
 {
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
 
+  registers_[rd_number] = registers_[rs1_number] + registers_[rs2_number];
+  return true;
 }
 
-void CPU::EBREAK(u32 word)
+bool CPU::ADDI(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = registers_[rs1_number] + imm;
+  return true;
 }
 
-void CPU::JAL(u32 word)
+bool CPU::AND(u32 word)
 {
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
 
+  registers_[rd_number] = registers_[rs1_number] & registers_[rs2_number];
+  return true;
 }
 
-void CPU::JALR(u32 word)
+bool CPU::ANDI(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = registers_[rs1_number] & imm;
+  return true;
 }
 
-void CPU::LB(u32 word)
+bool CPU::AUIPC(u32 word)
 {
+  u32 rd_number, imm;
+  getUType(word, rd_number, imm);
 
+  registers_[rd_number] = pc_ + imm;
+  return true;
 }
 
-void CPU::LBU(u32 word)
+bool CPU::BEQ(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getBType(word, rs1_number, rs2_number, imm);
 
+  if(registers_[rs1_number] == registers_[rs2_number])
+  {
+    pc_ += imm;
+    return false;
+  }
+
+  return true;
 }
 
-void CPU::LH(u32 word)
+bool CPU::BGE(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getBType(word, rs1_number, rs2_number, imm);
 
+  if((s32) registers_[rs1_number] >= (s32) registers_[rs2_number])
+  {
+    pc_ += imm;
+    return false;
+  }
+
+  return true;
 }
 
-void CPU::LHU(u32 word)
+bool CPU::BGEU(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getBType(word, rs1_number, rs2_number, imm);
 
+  if(registers_[rs1_number] == registers_[rs2_number])
+  {
+    pc_ += imm;
+    return false;
+  }
+
+  return true;
 }
 
-void CPU::LUI(u32 word)
+bool CPU::BLT(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getBType(word, rs1_number, rs2_number, imm);
 
+  if((s32) registers_[rs1_number] < (s32) registers_[rs2_number])
+  {
+    pc_ += imm;
+    return false;
+  }
+
+  return true;
 }
 
-void CPU::LW(u32 word)
+bool CPU::BLTU(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getBType(word, rs1_number, rs2_number, imm);
 
+  if(registers_[rs1_number] < registers_[rs2_number])
+  {
+    pc_ += imm;
+    return false;
+  }
+
+  return true;
 }
 
-void CPU::OR(u32 word)
+bool CPU::BNE(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getBType(word, rs1_number, rs2_number, imm);
 
+  if(registers_[rs1_number] != registers_[rs2_number])
+  {
+    pc_ += imm;
+    return false;
+  }
+
+  return true;
 }
 
-void CPU::ORI(u32 word)
+bool CPU::EBREAK(u32 word)
 {
-
+  exit(0);
 }
 
-void CPU::SB(u32 word)
+bool CPU::JAL(u32 word)
 {
+  u32 rd_number, imm;
+  getJType(word, rd_number, imm);
 
+  registers_[rd_number] = pc_ + 4;
+  pc_ += imm;
+  return false;
 }
 
-void CPU::SH(u32 word)
+bool CPU::JALR(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = pc_ + 4;
+  pc_ = (registers_[rs1_number] + imm) & (~1);
+  return false;
 }
 
-void CPU::SLL(u32 word)
+bool CPU::LB(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = extendBit(read(registers_[rs1_number] + imm) & 0xFF, 7);
+  return true;
 }
 
-void CPU::SLLI(u32 word)
+bool CPU::LBU(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = read(registers_[rs1_number] + imm) & 0xFF;
+  return true;
 }
 
-void CPU::SLT(u32 word)
+bool CPU::LH(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  u32 read_halfword = read(registers_[rs1_number] + imm) | (read(registers_[rs1_number] + imm + 1) << 8);
+
+  registers_[rd_number] = extendBit(read_halfword, 15);
+  return true;
 }
 
-void CPU::SLTI(u32 word)
+bool CPU::LHU(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  u32 read_halfword = read(registers_[rs1_number] + imm) | (read(registers_[rs1_number] + imm + 1) << 8);
+
+  registers_[rd_number] = read_halfword;
+  return true;
 }
 
-void CPU::SLTIU(u32 word)
+bool CPU::LUI(u32 word)
 {
+  u32 rd_number, imm;
+  getUType(word, rd_number, imm);
 
+  registers_[rd_number] = imm;
+  return true;
 }
 
-void CPU::SLTU(u32 word)
+bool CPU::LW(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  u32 read_word = read(registers_[rs1_number] + imm) | (read(registers_[rs1_number] + imm + 1) << 8) |
+    (read(registers_[rs1_number] + imm + 2) << 16) | (read(registers_[rs1_number] + imm + 3) << 24);
+
+  registers_[rd_number] = read_word;
+  return true;
 }
 
-void CPU::SRA(u32 word)
+bool CPU::OR(u32 word)
 {
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
 
+  registers_[rd_number] = registers_[rs1_number] | registers_[rs2_number];
+  return true;
 }
 
-void CPU::SRAI(u32 word)
+bool CPU::ORI(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = registers_[rs1_number] | imm;
+  return true;
 }
 
-void CPU::SRL(u32 word)
+bool CPU::SB(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getSType(word, rs1_number, rs2_number, imm);
 
+  write(registers_[rs1_number] + imm, (u8) registers_[rs2_number]);
+  return true;
 }
 
-void CPU::SRLI(u32 word)
+bool CPU::SH(u32 word)
 {
+  u32 rs1_number, rs2_number, imm;
+  getSType(word, rs1_number, rs2_number, imm);
 
+  write(registers_[rs1_number] + imm, (u8) registers_[rs2_number]);
+  write(registers_[rs1_number] + imm + 1, (u8) (registers_[rs2_number] >> 8));
+  return true;
 }
 
-void CPU::SUB(u32 word)
+bool CPU::SLL(u32 word)
 {
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
 
+  registers_[rd_number] = registers_[rs1_number] << (registers_[rs2_number] % 32);
+  return true;
 }
 
-void CPU::SW(u32 word)
+bool CPU::SLLI(u32 word)
 {
+  u32 rd_number, rs1_number, shamt;
+  getI2Type(word, rd_number, rs1_number, shamt);
 
+  registers_[rd_number] = registers_[rs1_number] << shamt;
+  return true;
 }
 
-void CPU::XOR(u32 word)
+bool CPU::SLT(u32 word)
 {
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
 
+  registers_[rd_number] = ((s32) registers_[rs1_number] < (s32) registers_[rs2_number]) ? 1 : 0;
+  return true;
 }
 
-void CPU::XORI(u32 word)
+bool CPU::SLTI(u32 word)
 {
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
 
+  registers_[rd_number] = ((s32) registers_[rs1_number] < (s32) imm) ? 1 : 0;
+  return true;
+}
+
+bool CPU::SLTIU(u32 word)
+{
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
+
+  registers_[rd_number] = (registers_[rs1_number] < imm) ? 1 : 0;
+  return true;
+}
+
+bool CPU::SLTU(u32 word)
+{
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
+
+  registers_[rd_number] = (registers_[rs1_number] < registers_[rs2_number]) ? 1 : 0;
+  return true;
+}
+
+bool CPU::SRA(u32 word)
+{
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
+  u32 shift = registers_[rs2_number] % 32;
+
+  registers_[rd_number] = extendBit(registers_[rs1_number] >> shift, (31 - shift));
+  return true;
+}
+
+bool CPU::SRAI(u32 word)
+{
+  u32 rd_number, rs1_number, shamt;
+  getI2Type(word, rd_number, rs1_number, shamt);
+
+  registers_[rd_number] = extendBit(registers_[rs1_number] >> shamt, (31 - shamt));
+  return true;
+}
+
+bool CPU::SRL(u32 word)
+{
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
+  u32 shift = registers_[rs2_number] % 32;
+
+  registers_[rd_number] = registers_[rs1_number] >> shift;
+  return true;
+}
+
+bool CPU::SRLI(u32 word)
+{
+  u32 rd_number, rs1_number, shamt;
+  getI2Type(word, rd_number, rs1_number, shamt);
+
+  registers_[rd_number] = registers_[rs1_number] >> shamt;
+  return true;
+}
+
+bool CPU::SUB(u32 word)
+{
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
+
+  registers_[rd_number] = registers_[rs1_number] - registers_[rs2_number];
+  return true;
+}
+
+bool CPU::SW(u32 word)
+{
+  u32 rs1_number, rs2_number, imm;
+  getSType(word, rs1_number, rs2_number, imm);
+
+  write(registers_[rs1_number] + imm, (u8) registers_[rs2_number]);
+  write(registers_[rs1_number] + imm + 1, (u8) (registers_[rs2_number] >> 8));
+  write(registers_[rs1_number] + imm + 2, (u8) (registers_[rs2_number] >> 16));
+  write(registers_[rs1_number] + imm + 3, (u8) (registers_[rs2_number] >> 24));
+  return true;
+}
+
+bool CPU::XOR(u32 word)
+{
+  u32 rd_number, rs1_number, rs2_number;
+  getRType(word, rd_number, rs1_number, rs2_number);
+
+  registers_[rd_number] = registers_[rs1_number] ^ registers_[rs2_number];
+  return true;
+}
+
+bool CPU::XORI(u32 word)
+{
+  u32 rd_number, rs1_number, imm;
+  getIType(word, rd_number, rs1_number, imm);
+
+  registers_[rd_number] = registers_[rs1_number] ^ imm;
+  return true;
 }
 

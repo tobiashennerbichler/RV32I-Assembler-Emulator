@@ -25,9 +25,9 @@ enum InstructionType
 
 struct InstructionInfo
 {
-  int opcode_;
-  int func3_;
-  int func7_;
+  u32 opcode_;
+  u32 func3_;
+  u32 func7_;
   InstructionType type_;
 };
 
