@@ -1,0 +1,4 @@
+ADDI sp, zero, 0x700
+ADDI t0, zero, 256
+SB t0, 0(sp)
+EBREAK

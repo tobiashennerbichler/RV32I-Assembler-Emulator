@@ -2,7 +2,9 @@
 #include <fstream>
 
 /*
- * Transforms instructions into machine code and writes it into memory for CPU to execute
+ * This function uses the parser to parse the given file and then assembles each instruction
+ * into its corresponding machine word and writes into a binary file
+ * Also replaces the labels in the J(ump) and B(ranch) type instructions by their relative addresses to the current pc
  */
 void Assembler::assemble(std::string file_name)
 {
@@ -17,19 +19,17 @@ void Assembler::assemble(std::string file_name)
     exit(-1);
   }
 
-  //TODO: fix assignment so it works with relative addresses
   assignLabelAddress(instructions);
 
   for(auto &instruction : instructions)
   {
-    u32 machine_code = getHexRepresentation(instruction);
-    printf("hex: 0x%x\n", machine_code);
+    u32 machine_word = getMachineWord(instruction);
 
     for(int i = 0; i < 4; i++)
     {
-      u8 byte = (u8) machine_code;
+      u8 byte = (u8) machine_word;
       file.write((char *) &byte, sizeof(u8));
-      machine_code >>= 8;
+      machine_word >>= 8;
     }
   }
 
@@ -40,9 +40,7 @@ void Assembler::assemble(std::string file_name)
 }
 
 /*
- * Goes through list of instructions and assigns addresses to labels according to next instruction used
- * Sets imm values correctly for instructions that use these labels
- * param: instructions of the program
+ * Calculates the relative address of the used labels to the current pc and replaces them by it
  */
 void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 {
@@ -70,17 +68,14 @@ void Assembler::assignLabelAddress(std::vector<Instruction> &instructions)
 }
 
 /*
- * puts instruction into right format
- * param: instruction to transform
- * return: hex representation of instruction
+ * Assembles the given instruction based on its instruction type
  */
-u32 Assembler::getHexRepresentation(Instruction &instruction)
+u32 Assembler::getMachineWord(Instruction &instruction)
 {
   u32 hex = 0;
   InstructionInfo instruction_info = instruction.info_;
   hex |= (instruction_info.opcode_ & OPCODE_MASK);
 
-  //TODO: make function pointer
   switch(instruction_info.type_)
   {
     case U_TYPE:
@@ -109,6 +104,9 @@ u32 Assembler::getHexRepresentation(Instruction &instruction)
   return hex;
 }
 
+/*
+ * The following functions create the machine word according to the pattern of the given instruction type
+ */
 void Assembler::UType(u32 &hex, Instruction &instruction)
 {
   hex |= (((u32) instruction.Rd_ << 7) & 0xF80);

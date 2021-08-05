@@ -8,13 +8,14 @@ main:
     SW ra, 12(sp)
     SW fp, 8(sp)
     ADDI fp, sp, 16
-    ADDI t4, t3, -1
 
     ADD t0, zero, zero
     SW t0, -12(fp)
 
     ADD t1, zero, zero
     SW t1, -16(fp)
+
+    ADDI t2, zero, 3
 
     JAL ra, loop
 

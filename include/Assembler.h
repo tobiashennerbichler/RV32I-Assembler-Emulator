@@ -9,7 +9,7 @@ class Assembler
   private:
     Parser parser_;
     void assignLabelAddress(std::vector<Instruction> &instructions);
-    u32 getHexRepresentation(Instruction &instruction);
+    u32 getMachineWord(Instruction &instruction);
     void UType(u32 &hex, Instruction &instruction);
     void JType(u32 &hex, Instruction &instruction);
     void RType(u32 &hex, Instruction &instruction);

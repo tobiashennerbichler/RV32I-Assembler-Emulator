@@ -14,6 +14,7 @@ Parser::Parser()
     {"t5", 30}, {"t6", 31}
   };
 
+  //use this look-up table to get the corresponding instruction info used for assembling for the given instruction
   info_lut_ = {
     {"EBREAK", {0x73, 0x00, 0x00, I_TYPE}},
     {"LUI", {0x37, 0x00, 0x00, U_TYPE}},
@@ -68,11 +69,10 @@ void Parser::reset()
 }
 
 /*
- * goes through the given file and separates each statement into instructions
- * param instructions: vector that saves instructions for every line
- * param filename: filename for file to be parsed
- * return: true when file has been parsed
- * return: false when file could not be opened
+ * opens the given file and separates the labels from the instructions
+ * labels are stored in a separate look-up table with the address of the next instruction
+ * instructions are parsed depending on their type
+ * if not all labels are verified in the end, the program is not valid
  */
 bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename)
 {
@@ -120,9 +120,9 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename
 }
 
 /*
- * parses a line into instructions and checks for errors
- * param line: line to be parsed
- * return: Instructions in line
+ * Finds the instruction info for the current instruction in the look-up table if it exists
+ * Depending on the instruction info, it checks for correctness of the used instruction and parses
+ * the corresponding arguments
  */
 Instruction Parser::getInstruction(std::vector<std::string> &split_line)
 {
@@ -240,6 +240,11 @@ std::vector<std::string> Parser::splitLine(std::string &line)
   return attributes;
 }
 
+/*
+ * Parses the label by storing its name without the ':' and storing it in the look-up table if it does not
+ * already exist and verify it
+ * If it already exists, verify the label
+ */
 void Parser::parseLabel(std::vector<std::string> &split_line)
 {
   if(split_line.at(0).size() <= 1 || split_line.size() != 1)
@@ -264,6 +269,11 @@ void Parser::parseLabel(std::vector<std::string> &split_line)
   }
 }
 
+/*
+ * The following functions parse the strings depending on the instruction type
+ * If a J(ump) or B(ranch) type is parsed, then add the label to the look-up table but do not verify it yet
+ * as the label has to appear as a single statement for the program to be correct
+ */
 void Parser::parseUType(Instruction &instruction, std::vector<std::string> &split_line)
 {
   auto Rd = register_lut_.find(split_line.at(1));
@@ -389,6 +399,9 @@ void Parser::parseBType(Instruction &instruction, std::vector<std::string> &spli
   instruction.label_name_ = split_line.at(3);
 }
 
+/*
+ * Used to check if the given string contains a hexadecimal number
+ */
 bool Parser::isHex(std::string &line)
 {
   if(line.find("0x") != line.npos)
@@ -399,6 +412,9 @@ bool Parser::isHex(std::string &line)
   return false;
 }
 
+/*
+ * Try to get the integer representation of the given immediate string
+ */
 void Parser::getImm(int &imm, std::string &line)
 {
   if(isHex(line))

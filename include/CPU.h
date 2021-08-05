@@ -18,13 +18,13 @@ class CPU
     std::vector<u8> memory_;
 
     InstructionInfo getInfo(u32 word);
-    void getUType(u32 word, u32 &rd_number, u32 &imm);
-    void getJType(u32 word, u32 &rd_number, u32 &imm);
-    void getRType(u32 word, u32 &rd_number, u32 &rs1_number, u32 &rs2_number);
-    void getIType(u32 word, u32 &rd_number, u32 &rs1_number, u32 &imm);
-    void getI2Type(u32 word, u32 &rd_number, u32 &rs1_number, u32 &shamt);
-    void getSType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm);
-    void getBType(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm);
+    void getUTypeArgs(u32 word, u32 &rd_number, u32 &imm);
+    void getJTypeArgs(u32 word, u32 &rd_number, u32 &imm);
+    void getRTypeArgs(u32 word, u32 &rd_number, u32 &rs1_number, u32 &rs2_number);
+    void getITypeArgs(u32 word, u32 &rd_number, u32 &rs1_number, u32 &imm);
+    void getI2TypeArgs(u32 word, u32 &rd_number, u32 &rs1_number, u32 &shamt);
+    void getSTypeArgs(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm);
+    void getBTypeArgs(u32 word, u32 &rs1_number, u32 &rs2_number, u32 &imm);
 
     u32 extendBit(u32 word, u8 bit);
 
