@@ -12,7 +12,6 @@ class CPU
     void tick();
 
   private:
-    //TODO: make register[0] read-only and set it to 0
     u32 registers_[32];
     u32 pc_ = 0;
     std::vector<u8> memory_;
