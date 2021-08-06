@@ -214,7 +214,7 @@ Instruction Parser::getInstruction(std::vector<std::string> &split_line)
 }
 
 /*
- * splits the line with delimiters (' ', ',', '(' and ')')
+ * splits the line with delimiters (' ', ',', '(', ')' and '\t')
  */
 //TODO: interpret '#' as comments
 std::vector<std::string> Parser::splitLine(std::string &line)
@@ -225,7 +225,7 @@ std::vector<std::string> Parser::splitLine(std::string &line)
 
   for(auto &s : line)
   {
-    if(s == ' ' || s == ',' || s == '(' || s == ')')
+    if(s == ' ' || s == ',' || s == '(' || s == ')' || s == '\t')
     {
       if(!split.empty())
       {
