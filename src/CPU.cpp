@@ -86,7 +86,7 @@ void CPU::tick()
     word |= (read(addr++) << i*8);
   }
 
-  printf("read word: 0x%x from: 0x%x\n", word, pc_);
+  printf("0x%x: ", pc_);
 
   InstructionInfo info = getInfo(word);
   if((this->*instruction_lut_.at(info))(word))
@@ -296,7 +296,7 @@ bool CPU::ADD(u32 word)
 
   if(rd_number != 0)
   {
-    printf("ADD 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("ADD: add 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = registers_[rs1_number] + registers_[rs2_number];
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -312,7 +312,7 @@ bool CPU::ADDI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("ADDI 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
+    printf("ADDI: add 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
     registers_[rd_number] = registers_[rs1_number] + imm;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -327,7 +327,7 @@ bool CPU::AND(u32 word)
 
   if(rd_number != 0)
   {
-    printf("AND 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("AND: and 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = registers_[rs1_number] & registers_[rs2_number];
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -343,7 +343,7 @@ bool CPU::ANDI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("AND 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
+    printf("ANDI: and 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
     registers_[rd_number] = registers_[rs1_number] & imm;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -359,7 +359,7 @@ bool CPU::AUIPC(u32 word)
   if(rd_number != 0)
   {
     registers_[rd_number] = pc_ + imm;
-    printf("AUPIC add pc 0x%x and 0x%x (imm) to get 0x%x (reg %d)\n", pc_, imm, registers_[rd_number], rd_number);
+    printf("AUPIC: add pc 0x%x and 0x%x (imm) to get 0x%x (reg %d)\n", pc_, imm, registers_[rd_number], rd_number);
   }
 
   return true;
@@ -373,7 +373,7 @@ bool CPU::BEQ(u32 word)
   if(registers_[rs1_number] == registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BEQ 0x%x (reg %d) equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf("BEQ: 0x%x (reg %d) equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
@@ -389,7 +389,7 @@ bool CPU::BGE(u32 word)
   if((s32) registers_[rs1_number] >= (s32) registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BGE 0x%x (reg %d) greater or equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf("BGE: 0x%x (reg %d) greater or equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
@@ -405,7 +405,7 @@ bool CPU::BGEU(u32 word)
   if(registers_[rs1_number] == registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BGEU 0x%x (reg %d) greater or equal unsigned to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf("BGEU: 0x%x (reg %d) greater or equal (unsigned) to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
@@ -421,7 +421,7 @@ bool CPU::BLT(u32 word)
   if((s32) registers_[rs1_number] < (s32) registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BLT 0x%x (reg %d) less than 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf("BLT: 0x%x (reg %d) less than 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
@@ -437,7 +437,7 @@ bool CPU::BLTU(u32 word)
   if(registers_[rs1_number] < registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BLTU 0x%x (reg %d) less than unsigned 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf("BLTU: 0x%x (reg %d) less than (unsigned) 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
@@ -453,7 +453,7 @@ bool CPU::BNE(u32 word)
   if(registers_[rs1_number] != registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BNE 0x%x (reg %d) not equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf("BNE: 0x%x (reg %d) not equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
@@ -475,10 +475,10 @@ bool CPU::JAL(u32 word)
   if(rd_number != 0)
   {
     registers_[rd_number] = pc_ + 4;
-    printf("JAL store 0x%x (reg %d)\n", registers_[rd_number], rd_number);
+    printf("JAL: store 0x%x (reg %d), ", registers_[rd_number], rd_number);
   }
 
-  printf("JAL add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", pc_, imm, pc_ + imm);
+  printf("JAL: add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", pc_, imm, pc_ + imm);
   pc_ += imm;
   return false;
 }
@@ -491,12 +491,11 @@ bool CPU::JALR(u32 word)
   if(rd_number != 0)
   {
     registers_[rd_number] = pc_ + 4;
-    printf("JALR store 0x%x (reg %d)\n", registers_[rd_number], rd_number);
+    printf("JALR: store 0x%x (reg %d), ", registers_[rd_number], rd_number);
   }
 
   pc_ = (registers_[rs1_number] + imm) & (~1);
-  printf("JALR add 0x%x (reg %d) to 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
-    imm, pc_);
+  printf("JALR: add 0x%x (reg %d) to 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number, imm, pc_);
   return false;
 }
 
@@ -508,7 +507,7 @@ bool CPU::LB(u32 word)
   if(rd_number != 0)
   {
     u32 address = (registers_[rs1_number] + imm) & 0xFF;
-    printf("LB load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x", registers_[rs1_number], rs1_number, imm, address);
+    printf("LB: load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x", registers_[rs1_number], rs1_number, imm, address);
     registers_[rd_number] = extendBit(read(address), 7);
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -524,7 +523,7 @@ bool CPU::LBU(u32 word)
   if(rd_number != 0)
   {
     u32 address = (registers_[rs1_number] + imm) & 0xFF;
-    printf("LBU load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x", registers_[rs1_number], rs1_number, imm, address);
+    printf("LBU: load (unsigned) from address 0x%x (reg %d) + 0x%x (imm) = 0x%x", registers_[rs1_number], rs1_number, imm, address);
     registers_[rd_number] = read(address);
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -540,7 +539,7 @@ bool CPU::LH(u32 word)
   if(rd_number != 0)
   {
     u32 address = registers_[rs1_number] + imm;
-    printf("LH load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x", registers_[rs1_number], rs1_number, imm,
+    printf("LH: load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x", registers_[rs1_number], rs1_number, imm,
       address, address + 1);
     u32 read_halfword = read(address) | ((((u32) read(address + 1)) << 8));
     registers_[rd_number] = extendBit(read_halfword, 15);
@@ -558,7 +557,7 @@ bool CPU::LHU(u32 word)
   if(rd_number != 0)
   {
     u32 address = registers_[rs1_number] + imm;
-    printf("LHU load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x", registers_[rs1_number], rs1_number, imm,
+    printf("LHU: load (unsigned) from address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x", registers_[rs1_number], rs1_number, imm,
       address, address + 1);
     u32 read_halfword = read(address) | ((((u32) read(address + 1)) << 8));
     registers_[rd_number] = read_halfword;
@@ -576,7 +575,7 @@ bool CPU::LUI(u32 word)
   if(rd_number != 0)
   {
     registers_[rd_number] = imm;
-    printf("LUI set reg %d to 0x%x (imm)\n", rd_number, imm);
+    printf("LUI: set reg %d to 0x%x (imm)\n", rd_number, imm);
   }
 
   return true;
@@ -590,7 +589,7 @@ bool CPU::LW(u32 word)
   if(rd_number != 0)
   {
     u32 address = registers_[rs1_number] + imm;
-    printf("LW load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x", registers_[rs1_number], rs1_number, imm,
+    printf("LW: load from address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x", registers_[rs1_number], rs1_number, imm,
       address, address + 3);
     u32 read_word = read(address) | (((u32) read(address + 1)) << 8) |
       (((u32) read(address + 2)) << 16) | (((u32) read(address + 3)) << 24);
@@ -608,7 +607,7 @@ bool CPU::OR(u32 word)
 
   if(rd_number != 0)
   {
-    printf("OR 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("OR: or 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = registers_[rs1_number] | registers_[rs2_number];
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -624,7 +623,7 @@ bool CPU::ORI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("ORI 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
+    printf("ORI: or 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
     registers_[rd_number] = registers_[rs1_number] | imm;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -639,7 +638,7 @@ bool CPU::SB(u32 word)
 
   u32 address = registers_[rs1_number] + imm;
   write(address, (u8) registers_[rs2_number]);
-  printf("SB write 0x%x (reg %d) to address 0x%x (reg %d) + 0x%x (imm) = 0x%x\n", (u8) registers_[rs2_number], rs2_number,
+  printf("SB: write 0x%x (reg %d) to address 0x%x (reg %d) + 0x%x (imm) = 0x%x\n", (u8) registers_[rs2_number], rs2_number,
     registers_[rs1_number], rs1_number, imm, address);
   return true;
 }
@@ -652,7 +651,7 @@ bool CPU::SH(u32 word)
   u32 address = registers_[rs1_number] + imm;
   write(address, (u8) registers_[rs2_number]);
   write(address + 1, (u8) (registers_[rs2_number] >> 8));
-  printf("SH write 0x%x (reg %d) to address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x\n", (u16) registers_[rs2_number],
+  printf("SH: write 0x%x (reg %d) to address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x\n", (u16) registers_[rs2_number],
     rs2_number, registers_[rs1_number], rs1_number, imm, address, address + 1);
   return true;
 }
@@ -664,7 +663,7 @@ bool CPU::SLL(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SLL shift left 0x%x (reg %d) by 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("SLL: shift 0x%x (reg %d) left (logic) by 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = registers_[rs1_number] << (registers_[rs2_number] % 32);
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -680,7 +679,7 @@ bool CPU::SLLI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SLLI shift left 0x%x (reg %d) by 0x%x (shamt)", registers_[rs1_number], rs1_number, shamt);
+    printf("SLLI: shift 0x%x (reg %d) left (logic) by 0x%x (shamt)", registers_[rs1_number], rs1_number, shamt);
     registers_[rd_number] = registers_[rs1_number] << shamt;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -695,7 +694,7 @@ bool CPU::SLT(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SLT 0x%x (reg %d) <?> 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("SLT: 0x%x (reg %d) <?> 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = ((s32) registers_[rs1_number] < (s32) registers_[rs2_number]) ? 1 : 0;
     printf(" so set reg %d to 0x%x\n", rd_number, registers_[rd_number]);
@@ -711,7 +710,7 @@ bool CPU::SLTI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SLTI 0x%x (reg %d) <?> 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
+    printf("SLTI: 0x%x (reg %d) <?> 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
     registers_[rd_number] = ((s32) registers_[rs1_number] < (s32) imm) ? 1 : 0;
     printf(" so set reg %d to 0x%x\n", rd_number, registers_[rd_number]);
   }
@@ -726,9 +725,9 @@ bool CPU::SLTIU(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SLTIU 0x%x (reg %d) <?> 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
+    printf("SLTIU: 0x%x (reg %d) <?> 0x%x (imm) (unsigned)", registers_[rs1_number], rs1_number, imm);
     registers_[rd_number] = (registers_[rs1_number] < imm) ? 1 : 0;
-    printf("so set reg %d to 0x%x\n", rd_number, registers_[rd_number]);
+    printf(" so set reg %d to 0x%x\n", rd_number, registers_[rd_number]);
   }
 
   return true;
@@ -741,7 +740,7 @@ bool CPU::SLTU(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SLT 0x%x (reg %d) <?> 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("SLT: 0x%x (reg %d) <?> 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = (registers_[rs1_number] < registers_[rs2_number]) ? 1 : 0;
     printf(" so set reg %d to 0x%x\n", rd_number, registers_[rd_number]);
@@ -758,7 +757,7 @@ bool CPU::SRA(u32 word)
   if(rd_number != 0)
   {
     u32 shift = registers_[rs2_number] % 32;
-    printf("SRA shift 0x%x (reg %d) by 0x%x (reg %d) arithmetically", registers_[rs1_number], rs1_number,
+    printf("SRA: shift 0x%x (reg %d) right (arithmetic) by 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = extendBit(registers_[rs1_number] >> shift, (31 - shift));
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -774,7 +773,7 @@ bool CPU::SRAI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SRA shift 0x%x (reg %d) by 0x%x (shamt) arithmetically", registers_[rs1_number], rs1_number, shamt);
+    printf("SRAI: shift 0x%x (reg %d) right (arithmetic) by 0x%x (shamt)", registers_[rs1_number], rs1_number, shamt);
     registers_[rd_number] = extendBit(registers_[rs1_number] >> shamt, (31 - shamt));
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -790,7 +789,7 @@ bool CPU::SRL(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SRL shift 0x%x (reg %d) by 0x%x (reg %d) logically", registers_[rs1_number], rs1_number,
+    printf("SRL: shift 0x%x (reg %d) right (logic) by 0x%x (reg %d) logically", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = registers_[rs1_number] >> shift;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -806,7 +805,7 @@ bool CPU::SRLI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SRL shift 0x%x (reg %d) by 0x%x (shamt) logically", registers_[rs1_number], rs1_number, shamt);
+    printf("SRLI: shift 0x%x (reg %d) right (logic) by 0x%x (shamt) logically", registers_[rs1_number], rs1_number, shamt);
     registers_[rd_number] = registers_[rs1_number] >> shamt;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -821,8 +820,8 @@ bool CPU::SUB(u32 word)
 
   if(rd_number != 0)
   {
-    printf("SUB 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
-      registers_[rs2_number], rs2_number);
+    printf("SUB: subtract 0x%x (reg %d) from 0x%x (reg %d)", registers_[rs2_number], rs2_number,
+      registers_[rs1_number], rs1_number);
     registers_[rd_number] = registers_[rs1_number] - registers_[rs2_number];
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }
@@ -840,7 +839,7 @@ bool CPU::SW(u32 word)
   write(address + 1, (u8) (registers_[rs2_number] >> 8));
   write(address + 2, (u8) (registers_[rs2_number] >> 16));
   write(address + 3, (u8) (registers_[rs2_number] >> 24));
-  printf("SW write 0x%x (reg %d) to address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x\n", registers_[rs2_number],
+  printf("SW: write 0x%x (reg %d) to address 0x%x (reg %d) + 0x%x (imm) = 0x%x - 0x%x\n", registers_[rs2_number],
     rs2_number, registers_[rs1_number], rs1_number, imm, address, address + 3);
   return true;
 }
@@ -852,7 +851,7 @@ bool CPU::XOR(u32 word)
 
   if(rd_number != 0)
   {
-    printf("XOR 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
+    printf("XOR: xor 0x%x (reg %d) and 0x%x (reg %d)", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number);
     registers_[rd_number] = registers_[rs1_number] ^ registers_[rs2_number];
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
@@ -868,7 +867,7 @@ bool CPU::XORI(u32 word)
 
   if(rd_number != 0)
   {
-    printf("XOR 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
+    printf("XORI: xor 0x%x (reg %d) and 0x%x (imm)", registers_[rs1_number], rs1_number, imm);
     registers_[rd_number] = registers_[rs1_number] ^ imm;
     printf(" to get 0x%x (reg %d)\n", registers_[rd_number], rd_number);
   }

@@ -13,6 +13,7 @@ square:
         add     a0, a0, a0
         lw      fp, 8(sp)
         lw      ra, 12(sp)
+        addi    sp, sp, 16
         jalr    zero, 0(ra)
 
 main:

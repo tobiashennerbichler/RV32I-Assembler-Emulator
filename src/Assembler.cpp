@@ -15,16 +15,17 @@ void Assembler::assemble(std::string file_name)
 
   if(!file.is_open())
   {
-    printf("file not open\n");
+    printf("File could not be opened\n");
     exit(-1);
   }
 
   assignLabelAddress(instructions);
 
+//  int line = 1;
   for(auto &instruction : instructions)
   {
     u32 machine_word = getMachineWord(instruction);
-    printf("0x%x\n", machine_word);
+//    printf("line %d: 0x%x\n", line++, machine_word);
 
     for(int i = 0; i < 4; i++)
     {
@@ -32,11 +33,6 @@ void Assembler::assemble(std::string file_name)
       file.write((char *) &byte, sizeof(u8));
       machine_word >>= 8;
     }
-  }
-
-  for(auto &label : parser_.label_lut_)
-  {
-    printf("address of %s: 0x%x\n", label.first.c_str(), label.second.address_);
   }
 }
 

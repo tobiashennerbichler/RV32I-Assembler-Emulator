@@ -100,10 +100,9 @@ void Parser::parse(std::vector<Instruction> &instructions, std::string &filename
       }
 
       Instruction instruction = getInstruction(split_line);
-      printf("name: %s, Rd: %d, Rs1: %d, Rs2: %d, imm: %d, label: %s\n", instruction.name_.c_str(), instruction.Rd_, instruction.Rs1_,
-        instruction.Rs2_, instruction.imm_, instruction.label_name_.c_str());
+      printf("line %d: %s - Rd: %d - Rs1: %d - Rs2: %d - imm: %d - label: %s\n", ++line_count_, instruction.name_.c_str(),
+        instruction.Rd_, instruction.Rs1_, instruction.Rs2_, instruction.imm_, instruction.label_name_.c_str());
       instructions.push_back(instruction);
-      line_count_++;
     }
   }
 
