@@ -56,6 +56,7 @@ CPU::~CPU()
 
 }
 
+//TODO: if address out of range do something appropriate
 /*
  * Read one byte from the given address in memory
  */
@@ -370,13 +371,18 @@ bool CPU::BEQ(u32 word)
   u32 rs1_number, rs2_number, imm;
   getBTypeArgs(word, rs1_number, rs2_number, imm);
 
+  printf("BEQ:");
+
   if(registers_[rs1_number] == registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BEQ: 0x%x (reg %d) equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf(" 0x%x (reg %d) equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
+
+  printf(" do nothing because 0x%x (reg %d) != 0x%x (reg %d)\n", registers_[rs1_number], rs1_number,
+    registers_[rs2_number], rs2_number);
 
   return true;
 }
@@ -386,13 +392,18 @@ bool CPU::BGE(u32 word)
   u32 rs1_number, rs2_number, imm;
   getBTypeArgs(word, rs1_number, rs2_number, imm);
 
+  printf("BGE:");
+
   if((s32) registers_[rs1_number] >= (s32) registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BGE: 0x%x (reg %d) greater or equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf(" 0x%x (reg %d) greater or equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
+
+  printf(" do nothing because 0x%x (reg %d) < 0x%x (reg %d)\n", registers_[rs1_number], rs1_number,
+    registers_[rs2_number], rs2_number);
 
   return true;
 }
@@ -402,13 +413,18 @@ bool CPU::BGEU(u32 word)
   u32 rs1_number, rs2_number, imm;
   getBTypeArgs(word, rs1_number, rs2_number, imm);
 
-  if(registers_[rs1_number] == registers_[rs2_number])
+  printf("BGEU:");
+
+  if(registers_[rs1_number] >= registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BGEU: 0x%x (reg %d) greater or equal (unsigned) to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf(" 0x%x (reg %d) greater or equal (unsigned) to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
+
+  printf(" do nothing because 0x%x (reg %d) < 0x%x (reg %d) (unsigned)\n", registers_[rs1_number], rs1_number,
+    registers_[rs2_number], rs2_number);
 
   return true;
 }
@@ -418,13 +434,18 @@ bool CPU::BLT(u32 word)
   u32 rs1_number, rs2_number, imm;
   getBTypeArgs(word, rs1_number, rs2_number, imm);
 
+  printf("BLT:");
+
   if((s32) registers_[rs1_number] < (s32) registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BLT: 0x%x (reg %d) less than 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf(" 0x%x (reg %d) less than 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
+
+  printf(" do nothing because 0x%x (reg %d) >= 0x%x (reg %d)\n", registers_[rs1_number], rs1_number,
+    registers_[rs2_number], rs2_number);
 
   return true;
 }
@@ -434,13 +455,18 @@ bool CPU::BLTU(u32 word)
   u32 rs1_number, rs2_number, imm;
   getBTypeArgs(word, rs1_number, rs2_number, imm);
 
+  printf("BLTU:");
+
   if(registers_[rs1_number] < registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BLTU: 0x%x (reg %d) less than (unsigned) 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf(" 0x%x (reg %d) less than (unsigned) 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
+
+  printf(" do nothing because 0x%x (reg %d) >= 0x%x (reg %d) (unsigned)\n", registers_[rs1_number], rs1_number,
+    registers_[rs2_number], rs2_number);
 
   return true;
 }
@@ -450,13 +476,18 @@ bool CPU::BNE(u32 word)
   u32 rs1_number, rs2_number, imm;
   getBTypeArgs(word, rs1_number, rs2_number, imm);
 
+  printf("BNE:");
+
   if(registers_[rs1_number] != registers_[rs2_number])
   {
     pc_ += imm;
-    printf("BNE: 0x%x (reg %d) not equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
+    printf(" 0x%x (reg %d) not equal to 0x%x (reg %d) so add pc 0x%x and 0x%x (imm) to get new pc 0x%x\n", registers_[rs1_number], rs1_number,
       registers_[rs2_number], rs2_number, pc_ - imm, imm, pc_);
     return false;
   }
+
+  printf(" do nothing because 0x%x (reg %d) == 0x%x (reg %d)\n", registers_[rs1_number], rs1_number,
+    registers_[rs2_number], rs2_number);
 
   return true;
 }

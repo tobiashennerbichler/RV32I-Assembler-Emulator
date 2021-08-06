@@ -18,14 +18,22 @@ def main():
                 if "(int)" in line:
                     line = line.replace("(int)", "")
 
-                if "mv" in line:
+                split = line.split(" ")
+                for s in split:
+                    if s != "":
+                        a = s
+                        break
+
+                if a.lower() == "mv":
                     line = change_mv(line)
-                elif "call" in line:
+                elif a.lower() == "call":
                     line = change_call(line)
-                elif "ret" in line:
+                elif a.lower() == "ret":
                     line = change_ret(line)
-                elif "mul" in line:
+                elif a.lower() == "mul":
                     line = change_mul(line)
+                elif a.lower() == "j":
+                    line = line.replace("j", "beq \tzero, zero, ")
 
                 nf.write(line)
                 line = f.readline()
