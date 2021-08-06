@@ -74,7 +74,7 @@ void Parser::reset()
  * instructions are parsed depending on their type
  * if not all labels are verified in the end, the program is not valid
  */
-bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename)
+void Parser::parse(std::vector<Instruction> &instructions, std::string &filename)
 {
   reset();
   std::fstream file = std::fstream(filename, std::ios::in);
@@ -82,7 +82,7 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename
   if(!file.is_open())
   {
     printf("file %s could not be opened\n", filename.c_str());
-    return false;
+    exit(-1);
   }
 
   std::string line;
@@ -115,8 +115,6 @@ bool Parser::parse(std::vector<Instruction> &instructions, std::string &filename
       exit(-1);
     }
   }
-
-  return true;
 }
 
 /*
@@ -130,6 +128,11 @@ Instruction Parser::getInstruction(std::vector<std::string> &split_line)
   {
     printf("Invalid line (empty)\n");
     exit(-1);
+  }
+
+  for(auto &s : split_line.at(0))
+  {
+    s = toupper(s);
   }
 
   auto instruction_info = info_lut_.find(split_line.at(0));

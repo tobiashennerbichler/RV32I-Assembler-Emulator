@@ -9,7 +9,7 @@ class Parser
   public:
     Parser();
     virtual ~Parser();
-    bool parse(std::vector<Instruction> &instructions, std::string &filename);
+    void parse(std::vector<Instruction> &instructions, std::string &filename);
     std::map<std::string, Label> label_lut_;
 
   private:

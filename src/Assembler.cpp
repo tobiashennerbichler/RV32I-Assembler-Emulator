@@ -24,6 +24,7 @@ void Assembler::assemble(std::string file_name)
   for(auto &instruction : instructions)
   {
     u32 machine_word = getMachineWord(instruction);
+    printf("0x%x\n", machine_word);
 
     for(int i = 0; i < 4; i++)
     {
