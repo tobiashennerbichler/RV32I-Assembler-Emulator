@@ -3,8 +3,6 @@
 
 Emulator::Emulator()
 {
-  initWindow();
-
   for(int y = 0; y < HEIGHT; y++)
   {
     std::vector<int> pixels;
@@ -109,15 +107,22 @@ void Emulator::loadBinary()
 
 [[noreturn]] void Emulator::run()
 {
+  initWindow();
+  updateScreen();
+  draw();
+
   while(true)
   {
     cpu_.tick();
-    draw();
 
-    if(!window_open_)
+    while(continue_)
     {
-      exit(0);
+      executeEvents();
     }
+
+    continue_ = 1;
+
+    draw();
   }
 }
 
@@ -169,8 +174,7 @@ void Emulator::executeEvents()
     switch(event.type)
     {
       case SDL_QUIT:
-        window_open_ = 0;
-        break;
+        exit(0);
       case SDL_KEYDOWN:
         if(event.key.keysym.sym == SDLK_x)
         {
@@ -186,13 +190,6 @@ void Emulator::executeEvents()
 
 void Emulator::draw()
 {
-  while(continue_ && window_open_)
-  {
-    executeEvents();
-  }
-
-  continue_ = 1;
-
   SDL_RenderClear(renderer_);
 
   void* pixels_ptr;
@@ -221,7 +218,7 @@ void Emulator::draw()
   SDL_RenderPresent(renderer_);
 }
 
-void Emulator::addNumber(int x, int y, int number, bool highlight)
+void Emulator::addNumber(int x, int y, u8 number, bool highlight)
 {
   auto pattern = number_patterns_.at(number);
 
@@ -244,14 +241,35 @@ void Emulator::updateScreen()
   int width = 5;
   int height = 7;
 
+  for(int i = 0; i < HEIGHT; i++)
+  {
+    for(int j = 0; j < WIDTH; j++)
+    {
+      field_.at(i).at(j) = GREY;
+    }
+  }
+
   for(u32 address = 0; address < 0x100; address++)
   {
+    if(x == 1)
+    {
+      for(int i = 3; i >= 0; i--)
+      {
+        addNumber(x, y, (address >> (i*8 + 4)) & 0xF, false);
+        x += width + 1;
+        addNumber(x, y, (address >> i*8) & 0xF, false);
+        x += 2*width;
+      }
+
+      x += 4*width;
+    }
+
     bool highlight = (address >= cpu_.getPC() && address < (cpu_.getPC() + 4));
 
     u8 byte = cpu_.read(address);
-    addNumber(x, y, byte & 0xF, highlight);
-    x += width + 1;
     addNumber(x, y, (byte >> 4) & 0xF, highlight);
+    x += width + 1;
+    addNumber(x, y, byte & 0xF, highlight);
     x += 2*width;
 
     if(((address + 1) % 16) == 0)

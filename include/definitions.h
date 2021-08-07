@@ -4,7 +4,7 @@
 #include <string>
 
 #define OPCODE_MASK 0x7F
-#define WIDTH 300
+#define WIDTH 500
 #define HEIGHT 300
 #define PIXEL_SIZE 2
 #define WHITE 0xFFFFFF
