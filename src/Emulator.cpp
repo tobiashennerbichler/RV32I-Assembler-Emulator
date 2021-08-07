@@ -106,6 +106,7 @@ void Emulator::loadBinary()
   }
 
   code_size_ = address - 1;
+  saved_memory_ = cpu_.getMemory();
 }
 
 [[noreturn]] void Emulator::run()
@@ -124,6 +125,8 @@ void Emulator::loadBinary()
     }
 
     continue_ = 1;
+
+    saved_memory_ = cpu_.getMemory();
 
     draw();
   }
@@ -221,14 +224,48 @@ void Emulator::draw()
   SDL_RenderPresent(renderer_);
 }
 
-void Emulator::drawNumber(int x, int y, u8 number, bool highlight)
+void Emulator::drawNumber(int x, int y, u8 number, Highlight highlight)
 {
   auto pattern = number_patterns_.at(number);
+  int color;
+
+  switch(highlight)
+  {
+    case PC:
+      color = PC_HIGHLIGHT;
+      break;
+    case CHANGED:
+      color = CHANGED_HIGHLIGHT;
+      break;
+    case NONE:
+      color = WHITE;
+      break;
+  }
 
   for(auto &p : pattern)
   {
-    field_.at(y + p.first).at(x + p.second) = highlight ? BLUE : WHITE;
+    field_.at(y + p.first).at(x + p.second) = color;
   }
+}
+
+Highlight Emulator::getHighlight(u32 address)
+{
+  Highlight highlight;
+
+  if(address >= cpu_.getPC() && address < (cpu_.getPC() + 4))
+  {
+    highlight = PC;
+  }
+  else if(saved_memory_.at(address) != cpu_.read(address))
+  {
+    highlight = CHANGED;
+  }
+  else
+  {
+    highlight = NONE;
+  }
+
+  return highlight;
 }
 
 //TODO: make it more adaptive to screen size
@@ -279,9 +316,9 @@ void Emulator::drawMemorySection(int x, int y, u32 start_address, u32 end_addres
     //print address of line
     for(int i = 3; i >= 0; i--)
     {
-      drawNumber(x, y, (address >> (i * 8 + 4)) & 0xF, false);
+      drawNumber(x, y, (address >> (i * 8 + 4)) & 0xF, NONE);
       x += NUMBER_WIDTH + 1;
-      drawNumber(x, y, (address >> i * 8) & 0xF, false);
+      drawNumber(x, y, (address >> i * 8) & 0xF, NONE);
       x += 2 * NUMBER_WIDTH;
     }
     x += 4 * NUMBER_WIDTH;
@@ -289,7 +326,7 @@ void Emulator::drawMemorySection(int x, int y, u32 start_address, u32 end_addres
     //print every byte for this line, highlight it if it is part of the currently executed instruction
     for(int width = 0; width < 16; width++)
     {
-      bool highlight = (address >= cpu_.getPC() && address < (cpu_.getPC() + 4));
+      Highlight highlight = getHighlight(address);
 
       u8 byte = cpu_.read(address);
       drawNumber(x, y, (byte >> 4) & 0xF, highlight);

@@ -12,7 +12,8 @@
 
 #define WHITE 0xFFFFFF
 #define GREY 0x333333
-#define BLUE 0xFF
+#define PC_HIGHLIGHT 0xFF00
+#define CHANGED_HIGHLIGHT 0xFFFF00
 #define BLACK 0
 
 #define DEBUG
@@ -23,6 +24,13 @@ typedef uint8_t u8;
 typedef int8_t s8;
 typedef uint16_t u16;
 typedef int16_t s16;
+
+enum Highlight
+{
+  PC,
+  CHANGED,
+  NONE
+};
 
 enum InstructionType
 {

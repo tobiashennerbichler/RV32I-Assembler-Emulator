@@ -1074,3 +1074,8 @@ u32 CPU::getSP()
   return registers_[2];
 }
 
+std::vector<u8> CPU::getMemory()
+{
+  return memory_;
+}
+

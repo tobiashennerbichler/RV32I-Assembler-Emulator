@@ -12,6 +12,7 @@ class CPU
     void tick();
     u32 getPC();
     u32 getSP();
+    std::vector<u8> getMemory();
 
   private:
     u32 registers_[32];
