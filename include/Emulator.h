@@ -10,6 +10,9 @@ class Emulator
 
   private:
     void initWindow();
+    void initField();
+    void initNumberPatterns();
+
     void executeEvents();
     void draw();
     void drawNumber(int x, int y, u8 number, Highlight highlight);
@@ -18,6 +21,7 @@ class Emulator
     void resetScreen();
     void drawMemorySection(int x, int y, u32 start_address, u32 end_address);
     void drawRegisters();
+
     CPU cpu_;
     SDL_Window *window_;
     SDL_Renderer *renderer_;
