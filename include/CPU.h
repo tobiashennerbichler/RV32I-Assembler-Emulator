@@ -10,6 +10,7 @@ class CPU
     u8 read(u32 address);
     void write(u32 address, u8 data);
     void tick();
+    u32 getPC();
 
   private:
     u32 registers_[32];

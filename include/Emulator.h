@@ -12,7 +12,8 @@ class Emulator
     void initWindow();
     void executeEvents();
     void draw();
-    void addNumber(int x, int y, int number);
+    void addNumber(int x, int y, int number, bool highlight);
+    void updateScreen();
     CPU cpu_;
     SDL_Window *window_;
     SDL_Renderer *renderer_;

@@ -1060,3 +1060,8 @@ bool CPU::XORI(u32 word)
   return true;
 }
 
+u32 CPU::getPC()
+{
+  return pc_;
+}
+

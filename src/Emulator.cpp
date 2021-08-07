@@ -174,7 +174,7 @@ void Emulator::executeEvents()
       case SDL_KEYDOWN:
         if(event.key.keysym.sym == SDLK_x)
         {
-          addNumber(0, 0, 15);
+          updateScreen();
           continue_ = 0;
         }
         break;
@@ -221,13 +221,44 @@ void Emulator::draw()
   SDL_RenderPresent(renderer_);
 }
 
-void Emulator::addNumber(int x, int y, int number)
+void Emulator::addNumber(int x, int y, int number, bool highlight)
 {
   auto pattern = number_patterns_.at(number);
 
   for(auto &p : pattern)
   {
-    field_.at(y + p.first).at(y + p.second) = WHITE;
+    if(highlight)
+    {
+      field_.at(y + p.first).at(x + p.second) = BLUE;
+    }
+    else
+    {
+      field_.at(y + p.first).at(x + p.second) = WHITE;
+    }
+  }
+}
+
+void Emulator::updateScreen()
+{
+  int x = 1, y = 1;
+  int width = 5;
+  int height = 7;
+
+  for(u32 address = 0; address < 0x100; address++)
+  {
+    bool highlight = (address >= cpu_.getPC() && address < (cpu_.getPC() + 4));
+
+    u8 byte = cpu_.read(address);
+    addNumber(x, y, byte & 0xF, highlight);
+    x += width + 1;
+    addNumber(x, y, (byte >> 4) & 0xF, highlight);
+    x += 2*width;
+
+    if(((address + 1) % 16) == 0)
+    {
+      y += height + 2;
+      x = 1;
+    }
   }
 }
 

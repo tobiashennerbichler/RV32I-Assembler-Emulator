@@ -9,6 +9,7 @@
 #define PIXEL_SIZE 2
 #define WHITE 0xFFFFFF
 #define GREY 0x333333
+#define BLUE 0xFF
 #define BLACK 0
 
 #define DEBUG
