@@ -7,6 +7,9 @@
 #define WIDTH 500
 #define HEIGHT 300
 #define PIXEL_SIZE 2
+#define NUMBER_WIDTH 5
+#define NUMBER_HEIGHT 7
+
 #define WHITE 0xFFFFFF
 #define GREY 0x333333
 #define BLUE 0xFF

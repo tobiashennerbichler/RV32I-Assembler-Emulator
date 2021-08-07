@@ -1,7 +1,7 @@
 #include <cassert>
 #include "../include/CPU.h"
 
-CPU::CPU() : memory_(0x10000), pc_(0)
+CPU::CPU() : memory_size_(0x10000), memory_(memory_size_), pc_(0)
 {
   //used to get correct function for read instruction
   instruction_lut_ = {
@@ -56,12 +56,14 @@ CPU::~CPU()
 
 }
 
-//TODO: if address out of range do something appropriate
 /*
  * Read one byte from the given address in memory
  */
 u8 CPU::read(u32 address)
 {
+  //TODO: maybe not assert but exit
+  assert(address < memory_size_ && "Out of range");
+
   return memory_.at(address);
 }
 
@@ -70,6 +72,8 @@ u8 CPU::read(u32 address)
  */
 void CPU::write(u32 address, u8 data)
 {
+  assert(address < memory_size_ && "Out of range");
+
   memory_.at(address) = data;
 }
 
@@ -1063,5 +1067,10 @@ bool CPU::XORI(u32 word)
 u32 CPU::getPC()
 {
   return pc_;
+}
+
+u32 CPU::getSP()
+{
+  return registers_[2];
 }
 

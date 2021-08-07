@@ -1,5 +1,6 @@
 #include "../include/Emulator.h"
 #include <fstream>
+#include <cassert>
 
 Emulator::Emulator()
 {
@@ -27,7 +28,7 @@ Emulator::Emulator()
       },
       {
         {1, 0}, {1, 4}, {0, 1}, {0, 2}, {0, 3}, {6, 0}, {6, 1}, {6, 2},
-        {6, 3}, {6, 4}, {5, 0}, {4, 1}, {3, 2}, {2, 3}
+        {6, 3}, {6, 4}, {5, 0}, {4, 1}, {2, 3}, {2, 4}, {3, 2}
       },
       {
         {1, 0}, {0, 1}, {0, 2}, {0, 3}, {1, 4}, {2, 4}, {3, 3}, {3, 2},
@@ -43,9 +44,9 @@ Emulator::Emulator()
         {6, 2}, {6, 1}, {6, 0}
       },
       {
-        {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 0}, {2, 0}, {3, 0},
-        {4, 0}, {5, 0}, {6, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4}, {4, 4},
-        {5, 4}, {6, 4}, {6, 3}, {6, 2}, {6, 1}
+        {0, 1}, {0, 2}, {0, 3}, {1, 4}, {1, 0}, {2, 0}, {3, 0}, {4, 0},
+        {5, 0}, {3, 1}, {3, 2}, {3, 3}, {4, 4}, {5, 4}, {6, 3}, {6, 2},
+        {6, 1}
       },
       {
         {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 4}, {2, 3}, {3, 3},
@@ -103,6 +104,8 @@ void Emulator::loadBinary()
     file.read((char *) &byte, sizeof(u8));
     cpu_.write(address++, byte);
   }
+
+  code_size_ = address - 1;
 }
 
 [[noreturn]] void Emulator::run()
@@ -202,9 +205,9 @@ void Emulator::draw()
   {
     for(int x = 0; x < WIDTH; x++)
     {
-      for (uint w = 0; w < PIXEL_SIZE; w++)
+      for(int w = 0; w < PIXEL_SIZE; w++)
       {
-        for (uint h = 0; h < PIXEL_SIZE; h++)
+        for(int h = 0; h < PIXEL_SIZE; h++)
         {
           pixels[WIDTH * PIXEL_SIZE * (y * PIXEL_SIZE + h) + (x * PIXEL_SIZE + w)] = field_.at(y).at(x);
         }
@@ -218,29 +221,29 @@ void Emulator::draw()
   SDL_RenderPresent(renderer_);
 }
 
-void Emulator::addNumber(int x, int y, u8 number, bool highlight)
+void Emulator::drawNumber(int x, int y, u8 number, bool highlight)
 {
   auto pattern = number_patterns_.at(number);
 
   for(auto &p : pattern)
   {
-    if(highlight)
-    {
-      field_.at(y + p.first).at(x + p.second) = BLUE;
-    }
-    else
-    {
-      field_.at(y + p.first).at(x + p.second) = WHITE;
-    }
+    field_.at(y + p.first).at(x + p.second) = highlight ? BLUE : WHITE;
   }
 }
 
+//TODO: make it more adaptive to screen size
 void Emulator::updateScreen()
 {
   int x = 1, y = 1;
-  int width = 5;
-  int height = 7;
 
+  resetScreen();
+  drawMemorySection(x, y, 0, code_size_);
+  y += ((int) (code_size_ / 16) + 2) * (NUMBER_HEIGHT + 2);
+  drawMemorySection(x, y, cpu_.getSP() - 0x30, cpu_.getSP() + 0x30);
+}
+
+void Emulator::resetScreen()
+{
   for(int i = 0; i < HEIGHT; i++)
   {
     for(int j = 0; j < WIDTH; j++)
@@ -248,35 +251,65 @@ void Emulator::updateScreen()
       field_.at(i).at(j) = GREY;
     }
   }
+}
 
-  for(u32 address = 0; address < 0x100; address++)
+void Emulator::drawMemorySection(int x, int y, u32 start_address, u32 end_address)
+{
+  assert((s32) start_address < (s32) end_address && "start address >= end address");
+
+  //there are no entries at addresses < 0
+  if((s32) start_address < 0)
   {
-    if(x == 1)
+    end_address -= start_address;
+    start_address = 0;
+  }
+  //if start address not aligned, align it and add the rest to end address
+  else if((start_address % 16) != 0)
+  {
+    end_address += start_address % 16;
+    start_address %= 16;
+  }
+
+  u32 address = start_address;
+  u32 size = end_address - start_address;
+
+  //write 16 bytes in each line of code in each line
+  for(int height = 0; height <= (size / 16); height++)
+  {
+    //print address of line
+    for(int i = 3; i >= 0; i--)
     {
-      for(int i = 3; i >= 0; i--)
+      drawNumber(x, y, (address >> (i * 8 + 4)) & 0xF, false);
+      x += NUMBER_WIDTH + 1;
+      drawNumber(x, y, (address >> i * 8) & 0xF, false);
+      x += 2 * NUMBER_WIDTH;
+    }
+    x += 4 * NUMBER_WIDTH;
+
+    //print every byte for this line, highlight it if it is part of the currently executed instruction
+    for(int width = 0; width < 16; width++)
+    {
+      bool highlight = (address >= cpu_.getPC() && address < (cpu_.getPC() + 4));
+
+      u8 byte = cpu_.read(address);
+      drawNumber(x, y, (byte >> 4) & 0xF, highlight);
+      x += NUMBER_WIDTH + 1;
+      drawNumber(x, y, byte & 0xF, highlight);
+      x += 2 * NUMBER_WIDTH;
+
+      if(width == 7)
       {
-        addNumber(x, y, (address >> (i*8 + 4)) & 0xF, false);
-        x += width + 1;
-        addNumber(x, y, (address >> i*8) & 0xF, false);
-        x += 2*width;
+        x += 2 * NUMBER_WIDTH;
       }
 
-      x += 4*width;
+      if(++address == end_address)
+      {
+        break;
+      }
     }
 
-    bool highlight = (address >= cpu_.getPC() && address < (cpu_.getPC() + 4));
-
-    u8 byte = cpu_.read(address);
-    addNumber(x, y, (byte >> 4) & 0xF, highlight);
-    x += width + 1;
-    addNumber(x, y, byte & 0xF, highlight);
-    x += 2*width;
-
-    if(((address + 1) % 16) == 0)
-    {
-      y += height + 2;
-      x = 1;
-    }
+    y += NUMBER_HEIGHT + 2;
+    x = 1;
   }
 }
 

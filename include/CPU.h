@@ -11,10 +11,12 @@ class CPU
     void write(u32 address, u8 data);
     void tick();
     u32 getPC();
+    u32 getSP();
 
   private:
     u32 registers_[32];
     u32 pc_ = 0;
+    u32 memory_size_;
     std::vector<u8> memory_;
 
     InstructionInfo getInfo(u32 word);
