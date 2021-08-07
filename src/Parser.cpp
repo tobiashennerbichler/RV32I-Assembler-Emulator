@@ -121,6 +121,7 @@ void Parser::parse(std::vector<Instruction> &instructions, std::string &filename
  * Depending on the instruction info, it checks for correctness of the used instruction and parses
  * the corresponding arguments
  */
+//TODO: make error messages better, write line in which error occurred and which error occurred
 Instruction Parser::getInstruction(std::vector<std::string> &split_line)
 {
   if(split_line.empty())

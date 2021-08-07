@@ -104,12 +104,21 @@ u32 Assembler::getMachineWord(Instruction &instruction)
 /*
  * The following functions create the machine word according to the pattern of the given instruction type
  */
+
+/*
+ *   --31:12-----11:7---6:0--
+ * | imm[31:12] | rd | opcode |
+ */
 void Assembler::UType(u32 &hex, Instruction &instruction)
 {
   hex |= ((instruction.Rd_ << 7) & 0xF80);
   hex |= (instruction.imm_ & 0xFFFFF000);
 }
 
+/*
+ *   ---31-------30:21-------20--------19:12-----11:7---6:0--
+ * | imm[20] | imm[10:1] | imm[11] | imm[19:12] | rd | opcode |
+ */
 void Assembler::JType(u32 &hex, Instruction &instruction)
 {
   hex |= ((instruction.Rd_ << 7) & 0xF80);
@@ -121,49 +130,69 @@ void Assembler::JType(u32 &hex, Instruction &instruction)
   hex |= (imm20 << 11) | (imm101 << 20) | (imm11 << 9) | imm1912;
 }
 
+/*
+ *   -31:25--24:20-19:15--14:12---11:7---6:0--
+ * | funct7 | rs2 | rs1 | funct3 | rd | opcode |
+ */
 void Assembler::RType(u32 &hex, Instruction &instruction)
 {
   InstructionInfo instruction_info = instruction.info_;
 
   hex |= ((instruction.Rd_ << 7) & 0xF80);
-  hex |= ((instruction_info.func3_ << 12) & 0x7000);
+  hex |= ((instruction_info.funct3_ << 12) & 0x7000);
   hex |= ((instruction.Rs1_ << 15) & 0xF8000);
   hex |= ((instruction.Rs2_ << 20) & 0x1F00000);
-  hex |= ((instruction_info.func7_ << 25) & 0xFE000000);
+  hex |= ((instruction_info.funct7_ << 25) & 0xFE000000);
 }
 
+/*
+ *   --31:20----19:15--14:12---11:7---6:0--
+ * | imm[11:0] | rs1 | funct3 | rd | opcode |
+ */
 void Assembler::IType(u32 &hex, Instruction &instruction)
 {
   InstructionInfo instruction_info = instruction.info_;
 
   hex |= ((instruction.Rd_ << 7) & 0xF80);
-  hex |= ((instruction_info.func3_ << 12) & 0x7000);
+  hex |= ((instruction_info.funct3_ << 12) & 0x7000);
   hex |= ((instruction.Rs1_ << 15) & 0xF8000);
   hex |= ((instruction.imm_ << 20) & 0xFFF00000);
 }
 
+/*
+ *   -31:25---24:20--19:15--14:12---11:7---6:0--
+ * | funct7 | shamt | rs1 | funct3 | rd | opcode |
+ */
 void Assembler::I2Type(u32 &hex, Instruction &instruction)
 {
   InstructionInfo instruction_info = instruction.info_;
 
   hex |= ((instruction.Rd_ << 7) & 0xF80);
-  hex |= ((instruction_info.func3_ << 12) & 0x7000);
+  hex |= ((instruction_info.funct3_ << 12) & 0x7000);
   hex |= ((instruction.Rs1_ << 15) & 0xF8000);
   hex |= ((instruction.imm_ << 20) & 0x1F00000);
-  hex |= ((instruction_info.func7_ << 25) & 0xFE000000);
+  hex |= ((instruction_info.funct7_ << 25) & 0xFE000000);
 }
 
+/*
+ *   --31:25----24:20-19:15---14:12----11:7-------6:0--
+ * | imm[11:5] | rs2 | rs1 | funct3 | imm[4:0] | opcode |
+ */
 void Assembler::SType(u32 &hex, Instruction &instruction)
 {
   InstructionInfo instruction_info = instruction.info_;
 
   hex |= ((instruction.imm_ << 7) & 0xF80);
-  hex |= ((instruction_info.func3_ << 12) & 0x7000);
+  hex |= ((instruction_info.funct3_ << 12) & 0x7000);
   hex |= ((instruction.Rs1_ << 15) & 0xF8000);
   hex |= ((instruction.Rs2_ << 20) & 0x1F00000);
   hex |= ((instruction.imm_ << 20) & 0xFE000000);
 }
 
+/*
+ *   ---31-------30:25----24:20-19:15---14:12-----11:8--------7-------6:0--
+ * | imm[12] | imm[10:5] | rs2 | rs1 | funct3 | imm[4:1] | imm[11] | opcode |
+ */
 void Assembler::BType(u32 &hex, Instruction &instruction)
 {
   InstructionInfo instruction_info = instruction.info_;
@@ -173,7 +202,7 @@ void Assembler::BType(u32 &hex, Instruction &instruction)
   u32 imm105 = (instruction.imm_ << 20) & 0x7E000000;
   u32 imm12 = (instruction.imm_ << 19) & 0x80000000;
   hex |= imm11 | imm41;
-  hex |= ((instruction_info.func3_ << 12) & 0x7000);
+  hex |= ((instruction_info.funct3_ << 12) & 0x7000);
   hex |= ((instruction.Rs1_ << 15) & 0xF8000);
   hex |= ((instruction.Rs2_ << 20) & 0x1F00000);
   hex |= imm105 | imm12;

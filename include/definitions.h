@@ -4,6 +4,14 @@
 #include <string>
 
 #define OPCODE_MASK 0x7F
+#define WIDTH 300
+#define HEIGHT 300
+#define PIXEL_SIZE 2
+#define WHITE 0xFFFFFF
+#define GREY 0x333333
+#define BLACK 0
+
+#define DEBUG
 
 typedef uint32_t u32;
 typedef int32_t s32;
@@ -26,8 +34,8 @@ enum InstructionType
 struct InstructionInfo
 {
   u32 opcode_;
-  u32 func3_;
-  u32 func7_;
+  u32 funct3_;
+  u32 funct7_;
   InstructionType type_;
 };
 
@@ -37,13 +45,13 @@ inline bool operator<(const InstructionInfo &i1, const InstructionInfo &i2)
   {
     return i1.opcode_ < i2.opcode_;
   }
-  else if(i1.func3_ != i2.func3_)
+  else if(i1.funct3_ != i2.funct3_)
   {
-    return i1.func3_ < i2.func3_;
+    return i1.funct3_ < i2.funct3_;
   }
-  else if(i1.func7_ != i2.func7_)
+  else if(i1.funct7_ != i2.funct7_)
   {
-    return i1.func7_ < i2.func7_;
+    return i1.funct7_ < i2.funct7_;
   }
   else
   {
