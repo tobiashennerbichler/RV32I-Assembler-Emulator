@@ -11,7 +11,7 @@ class CPU
     void write(u32 address, u8 data);
     void tick();
     u32 getPC();
-    u32 getSP();
+    u32 getRegister(int number);
     std::vector<u8> getMemory();
 
   private:

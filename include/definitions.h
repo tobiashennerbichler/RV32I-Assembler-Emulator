@@ -10,6 +10,13 @@
 #define NUMBER_WIDTH 5
 #define NUMBER_HEIGHT 7
 
+#define BYTE_PER_LINE 16
+#define X_LEN 32
+#define HI_LO_DISTANCE (NUMBER_WIDTH + 1)
+#define BYTE_DISTANCE (2 * NUMBER_WIDTH)
+#define ADDRESS_DISTANCE (4 * NUMBER_WIDTH)
+#define ROW_DISTANCE (NUMBER_HEIGHT + 2)
+
 #define WHITE 0xFFFFFF
 #define GREY 0x333333
 #define PC_HIGHLIGHT 0xFF00
@@ -27,9 +34,9 @@ typedef int16_t s16;
 
 enum Highlight
 {
-  PC,
-  CHANGED,
-  NONE
+  PC = PC_HIGHLIGHT,
+  CHANGED = CHANGED_HIGHLIGHT,
+  NONE = WHITE
 };
 
 enum InstructionType

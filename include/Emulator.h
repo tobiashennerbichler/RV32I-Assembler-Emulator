@@ -12,10 +12,11 @@ class Emulator
     void initWindow();
     void initField();
     void initNumberPatterns();
+    void initRegisterNamePatterns();
 
     void executeEvents();
     void draw();
-    void drawNumber(int x, int y, u8 number, Highlight highlight);
+    void drawPattern(int x, int y, std::vector<std::pair<int, int>> &pattern, Highlight highlight);
     Highlight getHighlight(u32 address);
     void updateScreen();
     void resetScreen();
@@ -29,6 +30,8 @@ class Emulator
     int continue_ = 1;
     u32 code_size_ = 0;
     std::vector<std::vector<std::pair<int, int>>> number_patterns_;
+    std::vector<std::vector<std::pair<int, int>>> register_name_patterns_;
     std::vector<std::vector<int>> field_;
     std::vector<u8> saved_memory_;
+    u32 saved_registers_[32];
 };

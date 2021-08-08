@@ -1069,9 +1069,9 @@ u32 CPU::getPC()
   return pc_;
 }
 
-u32 CPU::getSP()
+u32 CPU::getRegister(int number)
 {
-  return registers_[2];
+  return registers_[number];
 }
 
 std::vector<u8> CPU::getMemory()
