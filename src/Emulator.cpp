@@ -417,14 +417,14 @@ void Emulator::drawRegisters()
 
     x += BYTE_DISTANCE;
 
-    Highlight highlight = (saved_registers_[index / 4] != cpu_.getRegister(index / 4)) ? CHANGED : NONE;
+    Highlight highlight = (saved_registers_[(index - 1) / 4] != cpu_.getRegister((index - 1) / 4)) ? CHANGED : NONE;
 
     for(int i = 3; i >= 0; i--)
     {
-      u32 number = (cpu_.getRegister(index / 4) >> (i * 8 + 4)) & 0xF + highlight * 16;
+      u32 number = ((cpu_.getRegister((index - 1) / 4) >> (i * 8 + 4)) & 0xF) + highlight * 16;
       drawPattern(x, y, numbers_.at(number));
       x += HI_LO_DISTANCE;
-      number = (cpu_.getRegister(index / 4) >> i * 8) & 0xF + highlight * 16;
+      number = ((cpu_.getRegister((index - 1) / 4) >> i * 8) & 0xF) + highlight * 16;
       drawPattern(x, y, numbers_.at(number));
       x += BYTE_DISTANCE;
     }
