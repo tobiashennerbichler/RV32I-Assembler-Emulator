@@ -6,17 +6,19 @@ class Emulator
   public:
     Emulator();
     void loadBinary();
-    [[noreturn]] void run();
 
   private:
     void initWindow();
     void initField();
-    void initNumberPatterns();
-    void initRegisterNamePatterns();
+    void initPatterns(int elements_per_row, int elements_per_col, std::string &file_name, std::vector<Pattern> &patterns);
+    void initRegisterPatterns();
+    void checkScreenBoundaries();
+
+    [[noreturn]] void run();
 
     void executeEvents();
     void draw();
-    void drawPattern(int x, int y, std::vector<std::pair<int, int>> &pattern, Highlight highlight);
+    void drawPattern(int x, int y, Pattern &pattern);
     Highlight getHighlight(u32 address);
     void updateScreen();
     void resetScreen();
@@ -29,8 +31,8 @@ class Emulator
     SDL_Texture *texture_;
     int continue_ = 1;
     u32 code_size_ = 0;
-    std::vector<std::vector<std::pair<int, int>>> number_patterns_;
-    std::vector<std::vector<std::pair<int, int>>> register_name_patterns_;
+    std::vector<Pattern> numbers_;
+    std::vector<Pattern> register_names_;
     std::vector<std::vector<int>> field_;
     std::vector<u8> saved_memory_;
     u32 saved_registers_[32];

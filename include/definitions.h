@@ -16,12 +16,12 @@
 #define BYTE_DISTANCE (2 * NUMBER_WIDTH)
 #define ADDRESS_DISTANCE (4 * NUMBER_WIDTH)
 #define ROW_DISTANCE (NUMBER_HEIGHT + 2)
+#define PC_SECTION 0x50
+#define SP_SECTION 0x80
 
-#define WHITE 0xFFFFFF
+#define BMP_HEADER_SIZE 54
+
 #define GREY 0x333333
-#define PC_HIGHLIGHT 0xFF00
-#define CHANGED_HIGHLIGHT 0xFFFF00
-#define BLACK 0
 
 #define DEBUG
 
@@ -31,12 +31,13 @@ typedef uint8_t u8;
 typedef int8_t s8;
 typedef uint16_t u16;
 typedef int16_t s16;
+typedef std::vector<int> Pattern;
 
 enum Highlight
 {
-  PC = PC_HIGHLIGHT,
-  CHANGED = CHANGED_HIGHLIGHT,
-  NONE = WHITE
+  NONE,
+  PC,
+  CHANGED
 };
 
 enum InstructionType

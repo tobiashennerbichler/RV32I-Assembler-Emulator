@@ -15,7 +15,6 @@ int main(int argc, char *argv[])
   assembler.assemble(file_name);
   Emulator emulator;
   emulator.loadBinary();
-  emulator.run();
 
   return 0;
 }
