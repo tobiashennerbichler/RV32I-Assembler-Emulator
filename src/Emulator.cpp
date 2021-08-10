@@ -12,11 +12,6 @@ Emulator::Emulator()
   initRegisterNames();
 }
 
-//TODO: fix header name patterns
-//TODO: check at start if everything can fit on the screen with the currently chosen values and otherwise print necessary size
-//TODO: more general formula for calculating the placements (maybe as a define)
-//TODO: make formulas/values down there more general
-
 void Emulator::loadBinary()
 {
   u32 address = 0;
@@ -352,7 +347,6 @@ void Emulator::resetScreen()
  * if start_address not aligned on the bytes per line, then align it and end_address to get the same range
  * then first draw address of the current line and then each byte per line
  */
-//TODO: some more general checking if everything can fit on the screen at the start of the emulator
 void Emulator::drawMemorySection(int x, int y, u32 start_address, u32 end_address)
 {
   assert((s32) start_address < (s32) end_address && "start address >= end address");
@@ -429,22 +423,18 @@ void Emulator::drawMemorySection(int x, int y, u32 start_address, u32 end_addres
     }
 
     y += ROW_DISTANCE;
-    x = 1;
+    x = START_X;
   }
 }
 
 void Emulator::drawRegisters(int x, int y)
 {
-  //TODO: make this more general
-  //TODO: fix calculating in definitions.h
   for(int j = 0; j < X_LEN; j++)
   {
     drawString(x, y, register_names_.at(j));
-
     x = REGISTER_X + 4 * HI_LO_DISTANCE;
 
     drawString(x, y, "=");
-
     x += BYTE_DISTANCE;
 
     Highlight highlight = (saved_registers_[j] != cpu_.getRegister(j)) ? CHANGED : NONE;
@@ -466,6 +456,8 @@ void Emulator::drawRegisters(int x, int y)
 
 void Emulator::drawString(int x, int y, std::string string)
 {
+  assert((x + string.size() * HI_LO_DISTANCE) <= WIDTH && "x out of range");
+
   for(auto &s : string)
   {
     drawPattern(x, y, ascii_patterns_.at(s), NONE);
@@ -475,13 +467,13 @@ void Emulator::drawString(int x, int y, std::string string)
 
 u32 Emulator::getAsciiNumber(u32 number)
 {
+  assert(number >= 0 && number < 16 && "number > 16 or < 0");
+
   if(number > 9)
   {
     return ((number % 10) + 'A');
   }
-  else
-  {
-    return (number + '0');
-  }
+
+  return (number + '0');
 }
 

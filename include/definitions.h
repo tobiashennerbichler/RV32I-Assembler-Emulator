@@ -16,7 +16,7 @@
 #define BYTE_DISTANCE (2 * NUMBER_WIDTH)
 #define ADDRESS_DISTANCE (4 * NUMBER_WIDTH)
 #define ROW_DISTANCE (NUMBER_HEIGHT + 2)
-#define PC_SECTION 0x50
+#define PC_SECTION 0x60
 #define SP_SECTION 0x80
 
 //start + space for address + space for 16 bytes + distance to register start
