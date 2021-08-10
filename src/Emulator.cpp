@@ -435,8 +435,6 @@ void Emulator::drawMemorySection(int x, int y, u32 start_address, u32 end_addres
 
 void Emulator::drawRegisters(int x, int y)
 {
-  int index = 0;
-
   //TODO: make this more general
   //TODO: fix calculating in definitions.h
   for(int j = 0; j < X_LEN; j++)
@@ -449,14 +447,14 @@ void Emulator::drawRegisters(int x, int y)
 
     x += BYTE_DISTANCE;
 
-    Highlight highlight = (saved_registers_[(index - 1) / 4] != cpu_.getRegister((index - 1) / 4)) ? CHANGED : NONE;
+    Highlight highlight = (saved_registers_[j] != cpu_.getRegister(j)) ? CHANGED : NONE;
 
     for(int i = ((X_LEN / 8) - 1); i >= 0; i--)
     {
-      u32 number = getAsciiNumber((cpu_.getRegister((index - 1) / 4) >> (i * 8 + 4)) & 0xF);
+      u32 number = getAsciiNumber((cpu_.getRegister(j) >> (i * 8 + 4)) & 0xF);
       drawPattern(x, y, ascii_patterns_.at(number), highlight);
       x += HI_LO_DISTANCE;
-      number = getAsciiNumber((cpu_.getRegister((index - 1) / 4) >> i * 8) & 0xF);
+      number = getAsciiNumber((cpu_.getRegister(j) >> i * 8) & 0xF);
       drawPattern(x, y, ascii_patterns_.at(number), highlight);
       x += BYTE_DISTANCE;
     }
