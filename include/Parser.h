@@ -29,5 +29,8 @@ class Parser
     void parseBType(Instruction &instruction, std::vector<std::string> &split_line);
     void getImm(int &imm, std::string &line);
 
+    void toLower(std::string &line);
+    void toUpper(std::string &line);
+
     bool isHex(std::string &line);
 };

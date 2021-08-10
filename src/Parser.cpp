@@ -130,10 +130,7 @@ Instruction Parser::getInstruction(std::vector<std::string> &split_line)
     exit(-1);
   }
 
-  for(auto &s : split_line.at(0))
-  {
-    s = toupper(s);
-  }
+  toUpper(split_line.at(0));
 
   auto instruction_info = info_lut_.find(split_line.at(0));
 
@@ -279,6 +276,7 @@ void Parser::parseLabel(std::vector<std::string> &split_line)
  */
 void Parser::parseUType(Instruction &instruction, std::vector<std::string> &split_line)
 {
+  toLower(split_line.at(1));
   auto Rd = register_lut_.find(split_line.at(1));
   int imm = 0;
 
@@ -296,12 +294,13 @@ void Parser::parseUType(Instruction &instruction, std::vector<std::string> &spli
 
 void Parser::parseJType(Instruction &instruction, std::vector<std::string> &split_line)
 {
+  toLower(split_line.at(1));
   auto Rd = register_lut_.find(split_line.at(1));
   auto label = label_lut_.find(split_line.at(2));
 
   if(Rd == register_lut_.end())
   {
-    printf("Error with register parsing in JAL\n");
+    printf("Error with register parsing in JType\n");
     exit(-1);
   }
 
@@ -316,6 +315,9 @@ void Parser::parseJType(Instruction &instruction, std::vector<std::string> &spli
 
 void Parser::parseRType(Instruction &instruction, std::vector<std::string> &split_line)
 {
+  toLower(split_line.at(1));
+  toLower(split_line.at(2));
+  toLower(split_line.at(3));
   auto Rd = register_lut_.find(split_line.at(1));
   auto Rs1 = register_lut_.find(split_line.at(2));
   auto Rs2 = register_lut_.find(split_line.at(3));
@@ -333,6 +335,7 @@ void Parser::parseRType(Instruction &instruction, std::vector<std::string> &spli
 
 void Parser::parseIType(Instruction &instruction, std::vector<std::string> &split_line)
 {
+  toLower(split_line.at(1));
   auto Rd = register_lut_.find(split_line.at(1));
   auto Rs1 = register_lut_.begin();
   int imm = 0;
@@ -341,11 +344,13 @@ void Parser::parseIType(Instruction &instruction, std::vector<std::string> &spli
     instruction.name_ == "SLTI" || instruction.name_ == "SLTIU" || instruction.name_ == "SRAI" ||
     instruction.name_ == "SRLI" || instruction.name_ == "XORI")
   {
+    toLower(split_line.at(2));
     Rs1 = register_lut_.find(split_line.at(2));
     getImm(imm, split_line.at(3));
   }
   else
   {
+    toLower(split_line.at(3));
     getImm(imm, split_line.at(2));
     Rs1 = register_lut_.find(split_line.at(3));
   }
@@ -363,6 +368,8 @@ void Parser::parseIType(Instruction &instruction, std::vector<std::string> &spli
 
 void Parser::parseSType(Instruction &instruction, std::vector<std::string> &split_line)
 {
+  toLower(split_line.at(1));
+  toLower(split_line.at(3));
   auto Rs1 = register_lut_.find(split_line.at(3));
   auto Rs2 = register_lut_.find(split_line.at(1));
   int imm = 0;
@@ -382,6 +389,8 @@ void Parser::parseSType(Instruction &instruction, std::vector<std::string> &spli
 
 void Parser::parseBType(Instruction &instruction, std::vector<std::string> &split_line)
 {
+  toLower(split_line.at(1));
+  toLower(split_line.at(2));
   auto Rs1 = register_lut_.find(split_line.at(1));
   auto Rs2 = register_lut_.find(split_line.at(2));
   auto label = label_lut_.find(split_line.at(3));
@@ -402,13 +411,35 @@ void Parser::parseBType(Instruction &instruction, std::vector<std::string> &spli
   instruction.label_name_ = split_line.at(3);
 }
 
+void Parser::toLower(std::string &line)
+{
+  for(auto &s : line)
+  {
+    s = tolower(s);
+  }
+}
+
+void Parser::toUpper(std::string &line)
+{
+  for(auto &s : line)
+  {
+    s = toupper(s);
+  }
+}
+
 /*
  * Used to check if the given string contains a hexadecimal number
  */
 bool Parser::isHex(std::string &line)
 {
-  if(line.find("0x") != line.npos)
+  if(line.size() >= 2 && line.at(0) == '0' && line.at(1) == 'x')
   {
+    if(line.size() == 2)
+    {
+      printf("line %d: imm \"%s\" wrong\n", line_count_, line.c_str());
+      exit(-1);
+    }
+
     return true;
   }
 

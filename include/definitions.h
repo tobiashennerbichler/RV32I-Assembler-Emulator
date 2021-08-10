@@ -4,11 +4,11 @@
 #include <string>
 
 #define OPCODE_MASK 0x7F
-#define WIDTH 500
-#define HEIGHT 300
-#define PIXEL_SIZE 2
+
 #define NUMBER_WIDTH 5
 #define NUMBER_HEIGHT 7
+#define START_X 1
+#define START_Y 1
 
 #define BYTE_PER_LINE 16
 #define X_LEN 32
@@ -19,8 +19,26 @@
 #define PC_SECTION 0x50
 #define SP_SECTION 0x80
 
+//start + space for address + space for 16 bytes + distance to register start
+#define REGISTER_X (START_X + (X_LEN / 8) * (HI_LO_DISTANCE + BYTE_DISTANCE) + ADDRESS_DISTANCE + \
+  BYTE_PER_LINE * (HI_LO_DISTANCE + BYTE_DISTANCE) + BYTE_DISTANCE + ADDRESS_DISTANCE - NUMBER_WIDTH)
+#define MAX_X (REGISTER_X + 4 * HI_LO_DISTANCE + BYTE_DISTANCE + \
+  (X_LEN / 8) * (HI_LO_DISTANCE + BYTE_DISTANCE) - NUMBER_WIDTH)
+
+#define SP_Y (START_Y + ROW_DISTANCE + (((PC_SECTION * 2) / BYTE_PER_LINE) + 2) * ROW_DISTANCE)
+#define SP_END_Y (SP_Y + ROW_DISTANCE + (((SP_SECTION * 2) / BYTE_PER_LINE) + 1) * ROW_DISTANCE)
+#define REGISTER_END_Y (START_Y + ROW_DISTANCE + X_LEN * ROW_DISTANCE)
+#define MAX_Y ((SP_END_Y < REGISTER_END_Y) ? REGISTER_END_Y : SP_END_Y)
+
+#define WIDTH MAX_X
+#define HEIGHT MAX_Y
+#define PIXEL_SIZE 2
+
 #define BMP_HEADER_SIZE 54
 
+#define WHITE 0xFFFFFF
+#define GREEN 0x00FF00
+#define YELLOW 0xFFFF00
 #define GREY 0x333333
 
 #define DEBUG
@@ -35,9 +53,9 @@ typedef std::vector<int> Pattern;
 
 enum Highlight
 {
-  NONE,
-  PC,
-  CHANGED
+  NONE = WHITE,
+  PC = GREEN,
+  CHANGED = YELLOW
 };
 
 enum InstructionType

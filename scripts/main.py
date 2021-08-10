@@ -24,15 +24,18 @@ def main():
                         a = s
                         break
 
-                if "mv" in a.lower():
+                a = a.replace("\t", "")
+                a = a.replace("\n", "")
+
+                if a.lower() == "mv":
                     line = change_mv(line)
-                elif "call" in a.lower():
+                elif a.lower() == "call":
                     line = change_call(line)
-                elif "ret" in a.lower():
+                elif a.lower() == "ret":
                     line = change_ret(line)
-                elif "mul" in a.lower():
+                elif a.lower() == "mul":
                     line = change_mul(line)
-                elif "j" in a.lower():
+                elif a.lower() == "j":
                     line = line.replace("j", "beq \tzero, zero, ")
 
                 nf.write(line)
