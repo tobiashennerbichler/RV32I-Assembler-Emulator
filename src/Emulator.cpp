@@ -70,13 +70,13 @@ void Emulator::updateScreen()
 {
   resetScreen();
 
-  drawString(START_X, START_Y, "PC-Section:");
+  drawString(START_X, START_Y, "Code:");
 
   u32 start = cpu_.getPC() - PC_SECTION;
   u32 end = cpu_.getPC() + PC_SECTION;
   drawMemorySection(START_X, START_Y + ROW_DISTANCE, start, end);
 
-  drawString(START_X, SP_Y, "SP-Section:");
+  drawString(START_X, SP_Y, "Stack:");
 
   start = cpu_.getRegister(2) - SP_SECTION;
   end = cpu_.getRegister(2) + SP_SECTION;

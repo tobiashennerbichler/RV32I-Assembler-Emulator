@@ -7,7 +7,7 @@ Parser::Parser()
   //use this look-up table to translate string representation of registers into its index
   register_lut_ = {
     {"zero", 0}, {"ra", 1}, {"sp", 2}, {"gp", 3}, {"tp", 4}, {"t0", 5},
-    {"t1", 6}, {"t2", 7}, {"fp", 8}, {"s1", 9}, {"a0", 10}, {"a1", 11},
+    {"t1", 6}, {"t2", 7}, {"fp", 8}, {"s0", 8}, {"s1", 9}, {"a0", 10}, {"a1", 11},
     {"a2", 12}, {"a3", 13}, {"a4", 14}, {"a5", 15}, {"a6", 16}, {"a7", 17},
     {"s2", 18}, {"s3", 19}, {"s4", 20}, {"s5", 21}, {"s6", 22}, {"s7", 23},
     {"s8", 24}, {"s9", 25}, {"s10", 26}, {"s11", 27}, {"t3", 28}, {"t4", 29},
@@ -81,36 +81,39 @@ void Parser::parse(std::vector<Instruction> &instructions, std::string &filename
 
   if(!file.is_open())
   {
-    printf("file %s could not be opened\n", filename.c_str());
+    std::cout << "File " << filename << " could not be opened" << std::endl;
     exit(-1);
   }
 
   std::string line;
   while(std::getline(file, line))
   {
-    if(!line.empty())
-    {
-      std::vector<std::string> split_line = splitLine(line);
-
-      //interpret single statements with an ':' at the end as a label
-      if(split_line.at(0).back() == ':')
-      {
-        parseLabel(split_line);
-        continue;
-      }
-
-      Instruction instruction = getInstruction(split_line);
-      printf("line %d: %s - Rd: %d - Rs1: %d - Rs2: %d - imm: %d - label: %s\n", line_count_++, instruction.name_.c_str(),
-        instruction.Rd_, instruction.Rs1_, instruction.Rs2_, instruction.imm_, instruction.label_name_.c_str());
-      instructions.push_back(instruction);
+    std::vector<std::string> tokens = tokenizeLine(line);
+    if(tokens.size() == 0) {
+      continue;
     }
+
+    //interpret single statements with an ':' at the end as a label
+    if(tokens.at(0).back() == ':')
+    {
+      parseLabel(tokens);
+      continue;
+    }
+
+    Instruction instruction = getInstruction(tokens);
+    #ifdef DEBUG
+    printf("line %d: %s - Rd: %d - Rs1: %d - Rs2: %d - imm: %d - label: %s\n", line_count_ + 1, instruction.name_.c_str(),
+      instruction.Rd_, instruction.Rs1_, instruction.Rs2_, instruction.imm_, instruction.label_name_.c_str());
+    #endif
+    line_count_++;
+    instructions.push_back(instruction);
   }
 
   for(auto &label : label_lut_)
   {
     if(!label.second.verified_)
     {
-      printf("Label \"%s\" not verified\n", label.first.c_str());
+      std::cout << "Label " << label.first << " " << label.first << " not verified" << std::endl;
       exit(-1);
     }
   }
@@ -122,89 +125,88 @@ void Parser::parse(std::vector<Instruction> &instructions, std::string &filename
  * the corresponding arguments
  */
 //TODO: make error messages better, write line in which error occurred and which error occurred
-Instruction Parser::getInstruction(std::vector<std::string> &split_line)
+Instruction Parser::getInstruction(std::vector<std::string> &tokens)
 {
-  if(split_line.empty())
+  if(tokens.empty())
   {
-    printf("Invalid line (empty)\n");
+    std::cout << "Invalid line (empty)" << std::endl;
     exit(-1);
   }
 
-  toUpper(split_line.at(0));
+  toUpper(tokens.at(0));
 
-  auto instruction_info = info_lut_.find(split_line.at(0));
-
+  auto instruction_info = info_lut_.find(tokens.at(0));
   if(instruction_info == info_lut_.end())
   {
-    printf("Unknown instruction: %s\n", split_line.at(0).c_str());
+    std::cout << "Unknown instruction: " << tokens.at(0) << std::endl;
     exit(-1);
   }
 
-  Instruction instruction = {split_line.at(0), 0, 0, 0, 0, "",
+  Instruction instruction = {tokens.at(0), 0, 0, 0, 0, "",
     instruction_info->second};
 
   switch(instruction.info_.type_)
   {
     case U_TYPE:
-      if(split_line.size() != 3)
+      if(tokens.size() != 3)
       {
-        printf("UType: Invalid line: %ld\n", split_line.size());
+        std::cout << "UType: Invalid line: " << tokens.size() << std::endl;
         exit(-1);
       }
 
-      parseUType(instruction, split_line);
+      parseUType(instruction, tokens);
       break;
     case J_TYPE:
-      if(split_line.size() != 3)
+      if(tokens.size() != 3)
       {
-        printf("JType: Invalid line: %ld\n", split_line.size());
+        std::cout << "JType: Invalid line: " << tokens.size() << std::endl;
         exit(-1);
       }
 
-      parseJType(instruction, split_line);
+      parseJType(instruction, tokens);
       break;
     case R_TYPE:
-      if(split_line.size() != 4)
+      if(tokens.size() != 4)
       {
-        printf("RType: Invalid line: %ld\n", split_line.size());
+        std::cout << "RType: Invalid line: " << tokens.size() << std::endl;
         exit(-1);
       }
 
-      parseRType(instruction, split_line);
+      parseRType(instruction, tokens);
       break;
     case I_TYPE:
     case I_TYPE2:
-      if(split_line.size() == 1 && instruction.name_ == "EBREAK")
+      if(tokens.size() == 1 && instruction.name_ == "EBREAK")
       {
         instruction.imm_ = 0x1;
         break;
       }
 
-      if(split_line.size() != 4)
+      if(tokens.size() != 4)
       {
-        printf("IType/IType2: Invalid line: %ld\n", split_line.size());
+        std::cout << "IType/IType2: Invalid line: " << tokens.size() << std::endl;
         exit(-1);
       }
 
-      parseIType(instruction, split_line);
+      parseIType(instruction, tokens);
       break;
     case S_TYPE:
-      if(split_line.size() != 4)
+      if(tokens.size() != 4)
       {
-        printf("SType: Invalid line: %ld\n", split_line.size());
+        std::cout << "SType: Invalid line: " << tokens.size() << std::endl;
         exit(-1);
       }
 
-      parseSType(instruction, split_line);
+      parseSType(instruction, tokens);
       break;
     case B_TYPE:
-      if(split_line.size() != 4)
+      if(tokens.size() != 4)
       {
-        printf("BType: Invalid line: %ld\n", split_line.size());
+        std::cout << "BType: Invalid line: " << tokens.size() << std::endl;
         exit(-1);
       }
 
-      parseBType(instruction, split_line);
+      parseBType(instruction, tokens);
       break;
   }
 
@@ -215,29 +217,22 @@ Instruction Parser::getInstruction(std::vector<std::string> &split_line)
  * splits the line with delimiters (' ', ',', '(', ')' and '\t')
  */
 //TODO: interpret '#' as comments
-std::vector<std::string> Parser::splitLine(std::string &line)
+std::vector<std::string> Parser::tokenizeLine(std::string &line)
 {
-  std::vector<std::string> attributes;
-  line.push_back(' ');
-  std::string split;
+  std::vector<std::string> tokens;
+  std::regex delimiters("[ ,()\t\r\n]");
+  auto it_begin = std::sregex_token_iterator(line.begin(), line.end(), delimiters, -1);
+  auto it_end = std::sregex_token_iterator();
+  for(auto it = it_begin; it != it_end; it++) {
+    std::string match = it->str();
+    if(match.empty()) {
+      continue;
+    }
 
-  for(auto &s : line)
-  {
-    if(s == ' ' || s == ',' || s == '(' || s == ')' || s == '\t')
-    {
-      if(!split.empty())
-      {
-        attributes.push_back(split);
-      }
-      split = "";
-    }
-    else
-    {
-      split.push_back(s);
-    }
+    tokens.push_back(match);
   }
 
-  return attributes;
+  return tokens;
 }
 
 /*
@@ -245,16 +240,16 @@ std::vector<std::string> Parser::splitLine(std::string &line)
  * already exist and verify it
  * If it already exists, verify the label
  */
-void Parser::parseLabel(std::vector<std::string> &split_line)
+void Parser::parseLabel(std::vector<std::string> &tokens)
 {
-  if(split_line.at(0).size() <= 1 || split_line.size() != 1)
+  if(tokens.at(0).size() <= 1 || tokens.size() != 1)
   {
-    printf("Not a label\n");
+    std::cout << "Not a label" << std::endl;
     exit(-1);
   }
 
   //store label without ':'
-  std::string label_name = split_line.at(0).substr(0, split_line.at(0).size() - 1);
+  std::string label_name = tokens.at(0).substr(0, tokens.at(0).size() - 1);
 
   auto label = label_lut_.find(label_name);
 
@@ -274,57 +269,57 @@ void Parser::parseLabel(std::vector<std::string> &split_line)
  * If a J(ump) or B(ranch) type is parsed, then add the label to the look-up table but do not verify it yet
  * as the label has to appear as a single statement for the program to be correct
  */
-void Parser::parseUType(Instruction &instruction, std::vector<std::string> &split_line)
+void Parser::parseUType(Instruction &instruction, std::vector<std::string> &tokens)
 {
-  toLower(split_line.at(1));
-  auto Rd = register_lut_.find(split_line.at(1));
+  toLower(tokens.at(1));
+  auto Rd = register_lut_.find(tokens.at(1));
   int imm = 0;
 
   if(Rd == register_lut_.end())
   {
-    printf("Error with register parsing in UType\n");
+    std::cout << "Error with register parsing in UType" << std::endl;
     exit(-1);
   }
 
-  getImm(imm, split_line.at(2));
+  getImm(imm, tokens.at(2));
 
   instruction.Rd_ = Rd->second;
   instruction.imm_ = imm;
 }
 
-void Parser::parseJType(Instruction &instruction, std::vector<std::string> &split_line)
+void Parser::parseJType(Instruction &instruction, std::vector<std::string> &tokens)
 {
-  toLower(split_line.at(1));
-  auto Rd = register_lut_.find(split_line.at(1));
-  auto label = label_lut_.find(split_line.at(2));
+  toLower(tokens.at(1));
+  auto Rd = register_lut_.find(tokens.at(1));
+  auto label = label_lut_.find(tokens.at(2));
 
   if(Rd == register_lut_.end())
   {
-    printf("Error with register parsing in JType\n");
+    std::cout << "Error with register parsing in JType" << std::endl;
     exit(-1);
   }
 
   if(label == label_lut_.end())
   {
-    label_lut_.insert({split_line.at(2), {false}});
+    label_lut_.insert({tokens.at(2), {false}});
   }
 
   instruction.Rd_ = Rd->second;
-  instruction.label_name_ = split_line.at(2);
+  instruction.label_name_ = tokens.at(2);
 }
 
-void Parser::parseRType(Instruction &instruction, std::vector<std::string> &split_line)
+void Parser::parseRType(Instruction &instruction, std::vector<std::string> &tokens)
 {
-  toLower(split_line.at(1));
-  toLower(split_line.at(2));
-  toLower(split_line.at(3));
-  auto Rd = register_lut_.find(split_line.at(1));
-  auto Rs1 = register_lut_.find(split_line.at(2));
-  auto Rs2 = register_lut_.find(split_line.at(3));
+  toLower(tokens.at(1));
+  toLower(tokens.at(2));
+  toLower(tokens.at(3));
+  auto Rd = register_lut_.find(tokens.at(1));
+  auto Rs1 = register_lut_.find(tokens.at(2));
+  auto Rs2 = register_lut_.find(tokens.at(3));
 
   if(Rd == register_lut_.end() || Rs1 == register_lut_.end() || Rs2 == register_lut_.end())
   {
-    printf("Error with register parsing in RType\n");
+    std::cout << "Error with register parsing in RType" << std::endl;
     exit(-1);
   }
 
@@ -333,10 +328,10 @@ void Parser::parseRType(Instruction &instruction, std::vector<std::string> &spli
   instruction.Rs2_ = Rs2->second;
 }
 
-void Parser::parseIType(Instruction &instruction, std::vector<std::string> &split_line)
+void Parser::parseIType(Instruction &instruction, std::vector<std::string> &tokens)
 {
-  toLower(split_line.at(1));
-  auto Rd = register_lut_.find(split_line.at(1));
+  toLower(tokens.at(1));
+  auto Rd = register_lut_.find(tokens.at(1));
   auto Rs1 = register_lut_.begin();
   int imm = 0;
 
@@ -344,20 +339,20 @@ void Parser::parseIType(Instruction &instruction, std::vector<std::string> &spli
     instruction.name_ == "SLTI" || instruction.name_ == "SLTIU" || instruction.name_ == "SRAI" ||
     instruction.name_ == "SRLI" || instruction.name_ == "XORI")
   {
-    toLower(split_line.at(2));
-    Rs1 = register_lut_.find(split_line.at(2));
-    getImm(imm, split_line.at(3));
+    toLower(tokens.at(2));
+    Rs1 = register_lut_.find(tokens.at(2));
+    getImm(imm, tokens.at(3));
   }
   else
   {
-    toLower(split_line.at(3));
-    getImm(imm, split_line.at(2));
-    Rs1 = register_lut_.find(split_line.at(3));
+    toLower(tokens.at(3));
+    getImm(imm, tokens.at(2));
+    Rs1 = register_lut_.find(tokens.at(3));
   }
 
   if(Rd == register_lut_.end() || Rs1 == register_lut_.end())
   {
-    printf("Error with register parsing in IType\n");
+    std::cout << "Error with register parsing in IType" << std::endl;
     exit(-1);
   }
 
@@ -366,19 +361,20 @@ void Parser::parseIType(Instruction &instruction, std::vector<std::string> &spli
   instruction.imm_ = imm;
 }
 
-void Parser::parseSType(Instruction &instruction, std::vector<std::string> &split_line)
+void Parser::parseSType(Instruction &instruction, std::vector<std::string> &tokens)
 {
-  toLower(split_line.at(1));
-  toLower(split_line.at(3));
-  auto Rs1 = register_lut_.find(split_line.at(3));
-  auto Rs2 = register_lut_.find(split_line.at(1));
+  toLower(tokens.at(1));
+  toLower(tokens.at(3));
+  auto Rs1 = register_lut_.find(tokens.at(3));
+  auto Rs2 = register_lut_.find(tokens.at(1));
   int imm = 0;
 
-  getImm(imm, split_line.at(2));
+  getImm(imm, tokens.at(2));
 
   if(Rs1 == register_lut_.end() || Rs2 == register_lut_.end())
   {
-    printf("Error with register parsing in SType\n");
+    std::cout << "Rs1: " << tokens.at(3) << " Rs2: " << tokens.at(1) << std::endl;
+    std::cout << "Error with register parsing in SType" << std::endl;
     exit(-1);
   }
 
@@ -387,44 +383,38 @@ void Parser::parseSType(Instruction &instruction, std::vector<std::string> &spli
   instruction.imm_ = imm;
 }
 
-void Parser::parseBType(Instruction &instruction, std::vector<std::string> &split_line)
+void Parser::parseBType(Instruction &instruction, std::vector<std::string> &tokens)
 {
-  toLower(split_line.at(1));
-  toLower(split_line.at(2));
-  auto Rs1 = register_lut_.find(split_line.at(1));
-  auto Rs2 = register_lut_.find(split_line.at(2));
-  auto label = label_lut_.find(split_line.at(3));
+  toLower(tokens.at(1));
+  toLower(tokens.at(2));
+  auto Rs1 = register_lut_.find(tokens.at(1));
+  auto Rs2 = register_lut_.find(tokens.at(2));
+  auto label = label_lut_.find(tokens.at(3));
 
   if(Rs1 == register_lut_.end() || Rs2 == register_lut_.end())
   {
-    printf("Error with register parsing in BType\n");
+    std::cout << "Error with register parsing in BType" << std::endl;
     exit(-1);
   }
 
   if(label == label_lut_.end())
   {
-    label_lut_.insert({split_line.at(3), {false}});
+    label_lut_.insert({tokens.at(3), {false}});
   }
 
   instruction.Rs1_ = Rs1->second;
   instruction.Rs2_ = Rs2->second;
-  instruction.label_name_ = split_line.at(3);
+  instruction.label_name_ = tokens.at(3);
 }
 
 void Parser::toLower(std::string &line)
 {
-  for(auto &s : line)
-  {
-    s = tolower(s);
-  }
+  std::transform(line.begin(), line.end(), line.begin(), [](char c) { return std::tolower(c); });
 }
 
 void Parser::toUpper(std::string &line)
 {
-  for(auto &s : line)
-  {
-    s = toupper(s);
-  }
+  std::transform(line.begin(), line.end(), line.begin(), [](char c) { return std::toupper(c); });
 }
 
 /*
@@ -436,7 +426,7 @@ bool Parser::isHex(std::string &line)
   {
     if(line.size() == 2)
     {
-      printf("line %d: imm \"%s\" wrong\n", line_count_, line.c_str());
+      std::cout << "line " << line_count_ << ": imm " << line << " wrong" << std::endl;
       exit(-1);
     }
 
@@ -451,28 +441,13 @@ bool Parser::isHex(std::string &line)
  */
 void Parser::getImm(int &imm, std::string &line)
 {
-  if(isHex(line))
-  {
-    try
-    {
-      imm = std::stoi(line, 0, 16);
-    }
-    catch(std::exception &e)
-    {
-      printf("Error with immediate parsing: %s\n", e.what());
-      exit(-1);
-    }
+  int base = isHex(line) ? 16 : 10;
+
+  try {
+    imm = std::stoi(line, nullptr, base);
   }
-  else
-  {
-    try
-    {
-      imm = std::stoi(line);
-    }
-    catch(std::exception &e)
-    {
-      printf("Error with immediate parsing: %s\n", e.what());
-      exit(-1);
-    }
+  catch(std::exception &e) {
+    std::cout << "Error with immediate parsing: " << e.what() << std::endl;
+    exit(-1);
   }
 }

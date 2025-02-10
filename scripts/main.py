@@ -1,6 +1,14 @@
+import sys
+
 def main():
-    with open("rv32gc.txt", "r") as f:
-        with open("../FileTests/rv32i.rasm", "w") as nf:
+    if len(sys.argv) != 2:
+        print("Usage: python3 main.py <filename>")
+        exit(-1)
+
+    filename = sys.argv[1]
+
+    with open(filename, "r") as f:
+        with open("../FileTests/" + filename + ".rasm", "w") as nf:
             nf.write("_start:\n")
             nf.write("\t\taddi \tsp, zero, 0x700\n")
             nf.write("\t\tjal \tra, main\n")
@@ -26,16 +34,21 @@ def main():
 
                 a = a.replace("\t", "")
                 a = a.replace("\n", "")
+                a = a.lower()
 
-                if a.lower() == "mv":
+                if a == "mv":
                     line = change_mv(line)
-                elif a.lower() == "call":
+                elif a == "call":
                     line = change_call(line)
-                elif a.lower() == "ret":
+                elif a == "ret":
                     line = change_ret(line)
-                elif a.lower() == "mul":
+                elif a == "mul":
                     line = change_mul(line)
-                elif a.lower() == "j":
+                elif a == "li":
+                    line = change_li(line)
+                elif a == "jr":
+                    line = change_jr(line)
+                elif a == "j":
                     line = line.replace("j", "beq \tzero, zero, ")
 
                 nf.write(line)
@@ -59,6 +72,35 @@ def change_call(line):
 def change_ret(line):
     return line.replace("ret", "jalr \tzero, 0(ra)")
 
+def change_jr(line):
+    return "jalr \tzero, 0(ra)\n"
+
+def change_li(line):
+    line = line.replace(",", " ")
+    line = line.replace("\n", " ")
+    split = line.split(" ")
+
+    tokens = []
+    for s in split:
+        if s != "":
+            tokens.append(s)
+    
+    imm = int(tokens[2])
+    # This means 11th bit is set, meaning ADDI would sign extend it
+    # Get signed representation of lower 12 bits and subtract it from immediate
+    # Then shift it to the right by 12 to get the offset that lui needs to have to get correct immediate
+    if imm >= 2048:
+        lower_12bits = imm & 0xFFF
+        lower_12bits = ~lower_12bits
+        upper_20bits = imm - lower_12bits
+        upper_20bits = (upper_20bits >> 12) & 0xFFF
+
+        line = "lui \t" + tokens[1] + ", " + upper_20bits
+        line += "addi \t" + tokens[1] + ", " + tokens[1] + ", " + lower_12bits + "\n"
+    else:
+        line = "addi \t" + tokens[1] + ", " + tokens[1] + ", " + tokens[2] + "\n"
+    return line
+
 def change_mul(line):
     line = line.replace(",", " ")
     line = line.replace("\n", " ")
@@ -77,7 +119,6 @@ def change_mul(line):
     line += "\t\taddi sp, sp, 12\n"
 
     return line
-
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,47 @@
+_start:
+		addi 	sp, zero, 0x700
+		jal 	ra, main
+		ebreak
+
+square:
+        addi    sp,sp,-32
+        sw      ra,28(sp)
+        sw      fp,24(sp)
+        addi    fp,sp,32
+        sw      a0,-20(fp)
+        lw      a5,-20(fp)
+		addi sp, sp, -12
+		sw t0, 8(sp)
+		sw t1, 4(sp)
+		sw t2, 0(sp)
+		add t0, zero, zero
+		add t1, a5, zero
+		add t2, a5, zero
+loop:
+		add t0, t0, t1
+		addi t2, t2, -1
+		bne t2, zero, loop
+		add a5, t0, zero
+		lw t0, 8(sp)
+		lw t1, 4(sp)
+		lw t2, 0(sp)
+		addi sp, sp, 12
+        add      a0,a5, zero
+        lw      ra,28(sp)
+        lw      fp,24(sp)
+        addi    sp,sp,32
+jalr 	zero, 0(ra)
+main:
+        addi    sp,sp,-32
+        sw      ra,28(sp)
+        sw      fp,24(sp)
+        addi    fp,sp,32
+addi 	a0, a0, 5
+        jal 	ra,     square
+        sw      a0,-20(fp)
+addi 	a5, a5, 0
+        add      a0,a5, zero
+        lw      ra,28(sp)
+        lw      fp,24(sp)
+        addi    sp,sp,32
+jalr 	zero, 0(ra)

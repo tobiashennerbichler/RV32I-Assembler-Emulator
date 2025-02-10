@@ -2,6 +2,10 @@
 #include <map>
 #include <string>
 #include <fstream>
+#include <iostream>
+#include <iterator>
+#include <regex>
+#include <string>
 #include "definitions.h"
 
 class Parser
@@ -14,7 +18,7 @@ class Parser
 
   private:
     Instruction getInstruction(std::vector<std::string> &split_line);
-    std::vector<std::string> splitLine(std::string &line);
+    std::vector<std::string> tokenizeLine(std::string &line);
     std::map<std::string, int> register_lut_;
     std::map<std::string, InstructionInfo> info_lut_;
     u32 line_count_ = 0;

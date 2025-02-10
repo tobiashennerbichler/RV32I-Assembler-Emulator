@@ -41,8 +41,6 @@
 #define YELLOW 0xFFFF00
 #define GREY 0x333333
 
-#define DEBUG
-
 typedef uint32_t u32;
 typedef int32_t s32;
 typedef uint8_t u8;
